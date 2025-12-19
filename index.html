@@ -80,33 +80,12 @@ th {
 </header>
 
 <nav>
-  <button class="active" onclick="showTab('fiscal', this)">Resumo Fiscalizações</button>
-  <button onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
+  <button class="active" onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
   <button onclick="showTab('os', this)">Resumo OS</button>
 </nav>
 
-<!-- ================= FISCALIZAÇÕES ================= -->
-<section id="fiscal" class="active">
-  <h2>Resumo de Fiscalizações</h2>
-
-  <div class="controls">
-    <select id="mesFiscal"></select>
-    <button onclick="buscarFiscalizacoes()">Buscar</button>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Linha</th>
-        <th>Qtd. Fiscalizações</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaFiscal"></tbody>
-  </table>
-</section>
-
 <!-- ================= OCORRÊNCIAS ================= -->
-<section id="ocorrencias">
+<section id="ocorrencias" class="active">
   <h2>Resumo de Ocorrências</h2>
 
   <div class="controls">
@@ -122,6 +101,7 @@ th {
         <th>Data</th>
         <th>Motorista</th>
         <th>Resumo</th>
+        <th>Status</th>
       </tr>
     </thead>
     <tbody id="tabelaOcorrencias"></tbody>
@@ -159,6 +139,7 @@ const URL_OS = "https://script.google.com/macros/s/AKfycbyKVm2k3rYD7WoDkPAaJ3kEs
 
 let grafico;
 
+/* ================= NAVEGAÇÃO ================= */
 function showTab(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
@@ -166,49 +147,34 @@ function showTab(id, btn) {
   btn.classList.add("active");
 }
 
+/* ================= MESES ================= */
 function gerarMeses() {
   const selects = document.querySelectorAll("select");
   const hoje = new Date();
+
   for (let i = 0; i < 12; i++) {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
     const mes = d.toISOString().slice(0,7);
+
     selects.forEach(s => {
-      const o = document.createElement("option");
-      o.value = mes;
-      o.text = mes;
-      s.appendChild(o);
+      const opt = document.createElement("option");
+      opt.value = mes;
+      opt.text = mes;
+      s.appendChild(opt);
     });
   }
-}
-
-/* ================= FISCALIZAÇÕES ================= */
-async function buscarFiscalizacoes() {
-  const mes = mesFiscal.value;
-  tabelaFiscal.innerHTML = "<tr><td colspan='2'>Carregando...</td></tr>";
-
-  const res = await fetch(`${URL_FISCAL}?aba=Resumo_Linhas&mes=${mes}`);
-  const dados = await res.json();
-
-  tabelaFiscal.innerHTML = "";
-  dados.forEach(l => {
-    tabelaFiscal.innerHTML += `
-      <tr>
-        <td>${l.Linha}</td>
-        <td>${l["Qtd. Fiscalização"]}</td>
-      </tr>`;
-  });
 }
 
 /* ================= OCORRÊNCIAS ================= */
 async function buscarOcorrencias() {
   const mes = mesOcorrencia.value;
-  tabelaOcorrencias.innerHTML = "<tr><td colspan='3'>Carregando...</td></tr>";
+  tabelaOcorrencias.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
 
-  const res = await fetch(`${URL_FISCAL}?aba=Resumo_ocorrencias&mes=${mes}`);
+  const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
   const lista = await res.json();
 
-  const contagem = {};
   tabelaOcorrencias.innerHTML = "";
+  const contagem = {};
 
   lista.forEach(o => {
     tabelaOcorrencias.innerHTML += `
@@ -216,7 +182,9 @@ async function buscarOcorrencias() {
         <td>${o.Data}</td>
         <td>${o.Motorista}</td>
         <td>${o.Resumo}</td>
+        <td>${o.Status}</td>
       </tr>`;
+
     contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
   });
 
@@ -229,7 +197,9 @@ async function buscarOcorrencias() {
     type: "bar",
     data: {
       labels: top5.map(i => i[0]),
-      datasets: [{ data: top5.map(i => i[1]) }]
+      datasets: [{
+        data: top5.map(i => i[1])
+      }]
     }
   });
 }
