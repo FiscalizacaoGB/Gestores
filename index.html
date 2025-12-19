@@ -74,6 +74,20 @@ th {
   color: red;
   font-weight: bold;
 }
+
+/* ===== STATUS OCORRÊNCIAS ===== */
+.status-tratado {
+  background-color: #d4edda;
+  color: #155724;
+  font-weight: bold;
+  text-align: center;
+}
+.status-nao-tratado {
+  background-color: #f8d7da;
+  color: #721c24;
+  font-weight: bold;
+  text-align: center;
+}
 </style>
 </head>
 
@@ -178,7 +192,6 @@ async function buscarOcorrencias() {
     const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
     const data = await res.json();
 
-    // Caso venha erro do Apps Script
     if (!Array.isArray(data)) {
       tabelaOcorrencias.innerHTML = `
         <tr>
@@ -186,7 +199,6 @@ async function buscarOcorrencias() {
             Erro: ${data.message || "Resposta inválida do servidor"}
           </td>
         </tr>`;
-      console.error("Erro retornado:", data);
       return;
     }
 
@@ -202,12 +214,21 @@ async function buscarOcorrencias() {
     const contagem = {};
 
     data.forEach(o => {
+      const statusTxt = (o.Status || "").toLowerCase();
+      let classeStatus = "";
+
+      if (statusTxt === "tratado") {
+        classeStatus = "status-tratado";
+      } else if (statusTxt === "não tratado" || statusTxt === "nao tratado") {
+        classeStatus = "status-nao-tratado";
+      }
+
       tabelaOcorrencias.innerHTML += `
         <tr>
           <td>${o.Data || ""}</td>
           <td>${o.Motorista || ""}</td>
           <td>${o.Resumo || ""}</td>
-          <td>${o.Status || ""}</td>
+          <td class="${classeStatus}">${o.Status || ""}</td>
         </tr>`;
 
       contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
@@ -235,7 +256,7 @@ async function buscarOcorrencias() {
           Erro de comunicação com o servidor
         </td>
       </tr>`;
-    console.error("Erro JS:", err);
+    console.error(err);
   }
 }
 
