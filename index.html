@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Gerencial - Cidade Sol</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
+header {
+  background: #0b2545;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+}
+header img {
+  height: 50px;
+}
+nav {
+  display: flex;
+  background: #163a63;
+}
+nav button {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  background: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+nav button.active {
+  background: #0b2545;
+  font-weight: bold;
+}
+section {
+  display: none;
+  padding: 20px;
+}
+section.active {
+  display: block;
+}
+select {
+  padding: 8px;
+  margin-bottom: 15px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 14px;
+}
+th {
+  background: #eee;
+}
+.summary-box {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-left: 5px solid #0b2545;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="logo.png" alt="Cidade Sol">
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('fiscal')">Resumo Fiscalizações</button>
+  <button onclick="showTab('ocorrencias')">Resumo Ocorrências</button>
+  <button onclick="showTab('os')">Resumo OS</button>
+</nav>
+
+<!-- ================= FISCALIZAÇÕES ================= -->
+<section id="fiscal" class="active">
+  <h2>Resumo de Fiscalizações</h2>
+
+  <select id="mesFiscal" onchange="carregarFiscalizacoes()"></select>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Linha</th>
+        <th>Qtd. Fiscalizações</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaFiscal"></tbody>
+  </table>
+</section>
+
+<!-- ================= OCORRÊNCIAS ================= -->
+<section id="ocorrencias">
+  <h2>Resumo de Ocorrências</h2>
+
+  <select id="mesOcorrencia" onchange="carregarOcorrencias()"></select>
+
+  <canvas id="graficoMotoristas" height="120"></canvas>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Motorista</th>
+        <th>Resumo</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaOcorrencias"></tbody>
+  </table>
+</section>
+
+<!-- ================= OS ================= -->
+<section id="os">
+  <h2>Resumo OS - Manutenção</h2>
+
+  <select id="mesOS" onchange="carregarOS()"></select>
+
+  <div class="summary-box" id="resumoOS"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Coluna A</th>
+        <th>Coluna B</th>
+        <th>Coluna C</th>
+        <th>Coluna E</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaOS"></tbody>
+  </table>
+</section>
+
+<script>
+const URL_FISCAL = "https://script.google.com/macros/s/AKfycbwhatv-MCyz5FT9fCQHNdj0MXKoVn62qne4tVcdfvPwfgIo27U_wLEC44axbUBrOQON/exec";
+const URL_OS = "https://script.google.com/macros/s/AKfycbwZJpiXD1Z7K-isBK0AprRDyPTwQ7_bczcLg5_wCWaZ-R86XViMlXx4aCyEyGaMM_Mh/exec";
+
+let grafico;
+
+function showTab(id) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  event.target.classList.add("active");
+}
+
+function gerarMeses() {
+  const selects = document.querySelectorAll("select");
+  const hoje = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const valor = d.toISOString().slice(0,7);
+    selects.forEach(s => {
+      const o = document.createElement("option");
+      o.value = valor;
+      o.text = valor;
+      s.appendChild(o);
+    });
+  }
+}
+
+async function carregarFiscalizacoes() {
+  const mes = mesFiscal.value;
+  const res = await fetch(URL_FISCAL);
+  const data = await res.json();
+  tabelaFiscal.innerHTML = "";
+
+  data["Resumo_Linhas"]
+    .filter(l => l.Mes === mes)
+    .forEach(l => {
+      tabelaFiscal.innerHTML += `<tr><td>${l.Linha}</td><td>${l["Qtd. Fiscalização"]}</td></tr>`;
+    });
+}
+
+async function carregarOcorrencias() {
+  const mes = mesOcorrencia.value;
+  const res = await fetch(URL_FISCAL);
+  const data = await res.json();
+  const lista = data["Resumo ocorrências"].filter(o => o.Mes === mes);
+
+  tabelaOcorrencias.innerHTML = "";
+  const contagem = {};
+
+  lista.forEach(o => {
+    tabelaOcorrencias.innerHTML += `<tr><td>${o.Data}</td><td>${o.Motorista}</td><td>${o.Resumo}</td></tr>`;
+    contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
+  });
+
+  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  if (grafico) grafico.destroy();
+  grafico = new Chart(document.getElementById("graficoMotoristas"), {
+    type: 'bar',
+    data: {
+      labels: top5.map(t => t[0]),
+      datasets: [{
+        data: top5.map(t => t[1])
+      }]
+    }
+  });
+}
+
+async function carregarOS() {
+  const mes = mesOS.value;
+  const res = await fetch(URL_OS);
+  const data = await res.json();
+
+  const filtrado = data.filter(o => o.A.startsWith(mes));
+  resumoOS.innerHTML = `<strong>Total de OS no mês:</strong> ${filtrado.length}`;
+
+  tabelaOS.innerHTML = "";
+  filtrado.forEach(o => {
+    tabelaOS.innerHTML += `<tr><td>${o.A}</td><td>${o.B}</td><td>${o.C}</td><td>${o.E}</td></tr>`;
+  });
+}
+
+gerarMeses();
+</script>
+
+</body>
+</html>
