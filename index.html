@@ -16,8 +16,6 @@ body {
 header {
   background: #0b2545;
   padding: 10px 20px;
-  display: flex;
-  align-items: center;
 }
 header img {
   height: 50px;
@@ -46,9 +44,12 @@ section {
 section.active {
   display: block;
 }
-select {
-  padding: 8px;
+.controls {
   margin-bottom: 15px;
+}
+select, button {
+  padding: 8px;
+  margin-right: 10px;
 }
 table {
   width: 100%;
@@ -79,16 +80,19 @@ th {
 </header>
 
 <nav>
-  <button class="active" onclick="showTab('fiscal')">Resumo Fiscalizações</button>
-  <button onclick="showTab('ocorrencias')">Resumo Ocorrências</button>
-  <button onclick="showTab('os')">Resumo OS</button>
+  <button class="active" onclick="showTab('fiscal', this)">Resumo Fiscalizações</button>
+  <button onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
+  <button onclick="showTab('os', this)">Resumo OS</button>
 </nav>
 
 <!-- ================= FISCALIZAÇÕES ================= -->
 <section id="fiscal" class="active">
   <h2>Resumo de Fiscalizações</h2>
 
-  <select id="mesFiscal" onchange="carregarFiscalizacoes()"></select>
+  <div class="controls">
+    <select id="mesFiscal"></select>
+    <button onclick="buscarFiscalizacoes()">Buscar</button>
+  </div>
 
   <table>
     <thead>
@@ -105,7 +109,10 @@ th {
 <section id="ocorrencias">
   <h2>Resumo de Ocorrências</h2>
 
-  <select id="mesOcorrencia" onchange="carregarOcorrencias()"></select>
+  <div class="controls">
+    <select id="mesOcorrencia"></select>
+    <button onclick="buscarOcorrencias()">Buscar</button>
+  </div>
 
   <canvas id="graficoMotoristas" height="120"></canvas>
 
@@ -125,17 +132,21 @@ th {
 <section id="os">
   <h2>Resumo OS - Manutenção</h2>
 
-  <select id="mesOS" onchange="carregarOS()"></select>
+  <div class="controls">
+    <select id="mesOS"></select>
+    <button onclick="buscarOS()">Buscar</button>
+  </div>
 
   <div class="summary-box" id="resumoOS"></div>
 
   <table>
     <thead>
       <tr>
-        <th>Coluna A</th>
-        <th>Coluna B</th>
-        <th>Coluna C</th>
-        <th>Coluna E</th>
+        <th>Data</th>
+        <th>Fiscal</th>
+        <th>Nº de Ordem</th>
+        <th>Observação</th>
+        <th>Nº da OS</th>
       </tr>
     </thead>
     <tbody id="tabelaOS"></tbody>
@@ -143,16 +154,16 @@ th {
 </section>
 
 <script>
-const URL_FISCAL = "https://script.google.com/macros/s/AKfycbwhatv-MCyz5FT9fCQHNdj0MXKoVn62qne4tVcdfvPwfgIo27U_wLEC44axbUBrOQON/exec";
-const URL_OS = "https://script.google.com/macros/s/AKfycbwZJpiXD1Z7K-isBK0AprRDyPTwQ7_bczcLg5_wCWaZ-R86XViMlXx4aCyEyGaMM_Mh/exec";
+const URL_FISCAL = "https://script.google.com/macros/s/AKfycbw_xphdlOxOfCkjqnN3QKzVxaOwE_lGyABX-aeePuiWMyaAKflMeW8ja-DgeoNcgkk-/exec";
+const URL_OS = "https://script.google.com/macros/s/AKfycbyKVm2k3rYD7WoDkPAaJ3kEsn7lPYccpnt0zY-ISrbXhMx3WLkrzvs8Q8jYT8kAbjT7/exec";
 
 let grafico;
 
-function showTab(id) {
+function showTab(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  event.target.classList.add("active");
+  btn.classList.add("active");
 }
 
 function gerarMeses() {
@@ -160,68 +171,89 @@ function gerarMeses() {
   const hoje = new Date();
   for (let i = 0; i < 12; i++) {
     const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-    const valor = d.toISOString().slice(0,7);
+    const mes = d.toISOString().slice(0,7);
     selects.forEach(s => {
       const o = document.createElement("option");
-      o.value = valor;
-      o.text = valor;
+      o.value = mes;
+      o.text = mes;
       s.appendChild(o);
     });
   }
 }
 
-async function carregarFiscalizacoes() {
+/* ================= FISCALIZAÇÕES ================= */
+async function buscarFiscalizacoes() {
   const mes = mesFiscal.value;
-  const res = await fetch(URL_FISCAL);
-  const data = await res.json();
-  tabelaFiscal.innerHTML = "";
+  tabelaFiscal.innerHTML = "<tr><td colspan='2'>Carregando...</td></tr>";
 
-  data["Resumo_Linhas"]
-    .filter(l => l.Mes === mes)
-    .forEach(l => {
-      tabelaFiscal.innerHTML += `<tr><td>${l.Linha}</td><td>${l["Qtd. Fiscalização"]}</td></tr>`;
-    });
+  const res = await fetch(`${URL_FISCAL}?aba=Resumo_Linhas&mes=${mes}`);
+  const dados = await res.json();
+
+  tabelaFiscal.innerHTML = "";
+  dados.forEach(l => {
+    tabelaFiscal.innerHTML += `
+      <tr>
+        <td>${l.Linha}</td>
+        <td>${l["Qtd. Fiscalização"]}</td>
+      </tr>`;
+  });
 }
 
-async function carregarOcorrencias() {
+/* ================= OCORRÊNCIAS ================= */
+async function buscarOcorrencias() {
   const mes = mesOcorrencia.value;
-  const res = await fetch(URL_FISCAL);
-  const data = await res.json();
-  const lista = data["Resumo ocorrências"].filter(o => o.Mes === mes);
+  tabelaOcorrencias.innerHTML = "<tr><td colspan='3'>Carregando...</td></tr>";
 
-  tabelaOcorrencias.innerHTML = "";
+  const res = await fetch(`${URL_FISCAL}?aba=Resumo_ocorrencias&mes=${mes}`);
+  const lista = await res.json();
+
   const contagem = {};
+  tabelaOcorrencias.innerHTML = "";
 
   lista.forEach(o => {
-    tabelaOcorrencias.innerHTML += `<tr><td>${o.Data}</td><td>${o.Motorista}</td><td>${o.Resumo}</td></tr>`;
+    tabelaOcorrencias.innerHTML += `
+      <tr>
+        <td>${o.Data}</td>
+        <td>${o.Motorista}</td>
+        <td>${o.Resumo}</td>
+      </tr>`;
     contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
   });
 
-  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const top5 = Object.entries(contagem)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,5);
 
   if (grafico) grafico.destroy();
   grafico = new Chart(document.getElementById("graficoMotoristas"), {
-    type: 'bar',
+    type: "bar",
     data: {
-      labels: top5.map(t => t[0]),
-      datasets: [{
-        data: top5.map(t => t[1])
-      }]
+      labels: top5.map(i => i[0]),
+      datasets: [{ data: top5.map(i => i[1]) }]
     }
   });
 }
 
-async function carregarOS() {
+/* ================= OS ================= */
+async function buscarOS() {
   const mes = mesOS.value;
-  const res = await fetch(URL_OS);
-  const data = await res.json();
+  tabelaOS.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-  const filtrado = data.filter(o => o.A.startsWith(mes));
-  resumoOS.innerHTML = `<strong>Total de OS no mês:</strong> ${filtrado.length}`;
+  const res = await fetch(`${URL_OS}?mes=${mes}`);
+  const dados = await res.json();
 
+  resumoOS.innerHTML = `<strong>Total de OS no mês:</strong> ${dados.length}`;
   tabelaOS.innerHTML = "";
-  filtrado.forEach(o => {
-    tabelaOS.innerHTML += `<tr><td>${o.A}</td><td>${o.B}</td><td>${o.C}</td><td>${o.E}</td></tr>`;
+
+  dados.forEach(o => {
+    tabelaOS.innerHTML += `
+      <tr>
+        <td>${o.Data}</td>
+        <td>${o.Fiscal}</td>
+        <td>${o["Nº de Ordem"]}</td>
+        <td>${o.Observação}</td>
+        <td>${o["Nº da OS"]}</td>
+      </tr>`;
   });
 }
 
