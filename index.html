@@ -74,6 +74,11 @@ th {
   color: red;
   font-weight: bold;
 }
+  input[type="month"] {
+  padding: 8px;
+  margin-right: 10px;
+}
+
 
 /* ===== STATUS OCORRÊNCIAS ===== */
 .status-tratado {
@@ -107,7 +112,7 @@ th {
   <h2>Resumo de Ocorrências</h2>
 
   <div class="controls">
-    <select id="mesOcorrencia"></select>
+    <input type="month" id="mesOcorrencia">
     <button onclick="buscarOcorrencias()">Buscar</button>
   </div>
 
@@ -131,7 +136,7 @@ th {
   <h2>Resumo OS - Manutenção</h2>
 
   <div class="controls">
-    <select id="mesOS"></select>
+    <input type="month" id="mesOS">
     <button onclick="buscarOS()">Buscar</button>
   </div>
 
@@ -165,23 +170,6 @@ function showTab(id, btn) {
   btn.classList.add("active");
 }
 
-/* ================= MESES ================= */
-function gerarMeses() {
-  const selects = document.querySelectorAll("select");
-  const hoje = new Date();
-
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-    const mes = d.toISOString().slice(0,7);
-
-    selects.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = mes;
-      opt.text = mes;
-      s.appendChild(opt);
-    });
-  }
-}
 
 /* ================= OCORRÊNCIAS ================= */
 async function buscarOcorrencias() {
@@ -304,7 +292,10 @@ async function buscarOS() {
   }
 }
 
-gerarMeses();
+const hoje = new Date().toISOString().slice(0,7);
+document.getElementById("mesOcorrencia").value = hoje;
+document.getElementById("mesOS").value = hoje;
+
 </script>
 
 </body>
