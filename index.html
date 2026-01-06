@@ -14,12 +14,16 @@ body {
   background: #f4f6f8;
 }
 
+/* ===== HEADER ===== */
 header {
   background: #0b2545;
   padding: 10px 20px;
 }
-header img { height: 50px; }
+header img {
+  height: 50px;
+}
 
+/* ===== NAV ===== */
 nav {
   display: flex;
   background: #163a63;
@@ -29,7 +33,7 @@ nav button {
   padding: 15px;
   border: none;
   background: none;
-  color: white;
+  color: #fff;
   font-size: 16px;
   cursor: pointer;
 }
@@ -38,6 +42,7 @@ nav button.active {
   font-weight: bold;
 }
 
+/* ===== SECTIONS ===== */
 section {
   display: none;
   padding: 20px;
@@ -46,12 +51,20 @@ section.active {
   display: block;
 }
 
-.controls { margin-bottom: 15px; }
+/* ===== CONTROLS ===== */
+.controls {
+  margin-bottom: 15px;
+}
+input, button {
+  padding: 8px;
+  margin-right: 10px;
+}
 
+/* ===== TABLE ===== */
 table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: #fff;
 }
 th, td {
   border: 1px solid #ddd;
@@ -59,17 +72,33 @@ th, td {
   font-size: 14px;
   text-align: center;
 }
-th { background: #eee; }
+th {
+  background: #eee;
+}
 
+/* ===== STATUS ===== */
 .status-tratado {
-  background-color: #d4edda;
+  background: #d4edda;
   color: #155724;
   font-weight: bold;
 }
 .status-nao-tratado {
-  background-color: #f8d7da;
+  background: #f8d7da;
   color: #721c24;
   font-weight: bold;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  nav button {
+    font-size: 14px;
+    padding: 12px 6px;
+  }
 }
 </style>
 </head>
@@ -81,8 +110,12 @@ th { background: #eee; }
 </header>
 
 <nav>
-  <button class="active" onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
-  <button onclick="showTab('os', this)">Resumo OS</button>
+  <button type="button" class="active" onclick="showTab('ocorrencias', this)">
+    Resumo Ocorrências
+  </button>
+  <button type="button" onclick="showTab('os', this)">
+    Resumo OS
+  </button>
 </nav>
 
 <!-- ================= OCORRÊNCIAS ================= -->
@@ -91,7 +124,7 @@ th { background: #eee; }
 
   <div class="controls">
     <input type="month" id="mesOcorrencia">
-    <button onclick="buscarOcorrencias()">Buscar</button>
+    <button type="button" onclick="buscarOcorrencias()">Buscar</button>
   </div>
 
   <canvas id="graficoMotoristas" height="120"></canvas>
@@ -106,4 +139,156 @@ th { background: #eee; }
       </tr>
     </thead>
     <tbody id="tabelaOcorrencias"></tbody>
-  </table
+  </table>
+</section>
+
+<!-- ================= OS ================= -->
+<section id="os">
+  <h2>Resumo OS</h2>
+
+  <div class="controls">
+    <input type="month" id="mesOS">
+    <button type="button" onclick="buscarOS()">Buscar</button>
+  </div>
+
+  <div id="resumoOS"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Fiscal</th>
+        <th>Nº Ordem</th>
+        <th>Observação</th>
+        <th>Nº OS</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaOS"></tbody>
+  </table>
+</section>
+
+<script>
+/* ===== URLs ===== */
+const URL_OCORRENCIAS =
+  "https://script.google.com/macros/s/AKfycbwppmMfiEuUhfwjWUOmne3MsznX7w4ztoTm8FZgcSxNEceWAiaY-31M7rVvXUkl8gfB/exec";
+
+const URL_OS =
+  "https://script.google.com/macros/s/AKfycbxPC3JLFZm0w6cM42UTRc_KWHLXVyLjWBI4P89saGEHsac4g1BusgsHhP77H6JVo4Db/exec";
+
+/* ===== ELEMENTOS ===== */
+const tabelaOcorrencias = document.getElementById("tabelaOcorrencias");
+const tabelaOS = document.getElementById("tabelaOS");
+const resumoOS = document.getElementById("resumoOS");
+const graficoMotoristas = document.getElementById("graficoMotoristas");
+
+let grafico;
+
+/* ===== NAVEGAÇÃO ===== */
+function showTab(id, btn) {
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+}
+
+/* ===== OCORRÊNCIAS ===== */
+async function buscarOcorrencias() {
+  const mes = document.getElementById("mesOcorrencia").value;
+  if (!mes) return alert("Selecione o mês");
+
+  tabelaOcorrencias.innerHTML =
+    "<tr><td colspan='4'>Carregando...</td></tr>";
+
+  const res = await fetch(
+    `${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`
+  );
+  const dados = await res.json();
+
+  if (!Array.isArray(dados)) {
+    tabelaOcorrencias.innerHTML =
+      "<tr><td colspan='4'>Erro ao carregar dados</td></tr>";
+    return;
+  }
+
+  tabelaOcorrencias.innerHTML = "";
+  const contagem = {};
+
+  dados.forEach(o => {
+    const statusTxt = (o.Status || "").toLowerCase();
+    let classe = "";
+
+    if (statusTxt === "tratado") classe = "status-tratado";
+    if (statusTxt === "não tratado" || statusTxt === "nao tratado")
+      classe = "status-nao-tratado";
+
+    tabelaOcorrencias.innerHTML += `
+      <tr>
+        <td>${o.Data || ""}</td>
+        <td>${o.Motorista || ""}</td>
+        <td>${o.Resumo || ""}</td>
+        <td class="${classe}">${o.Status || ""}</td>
+      </tr>`;
+
+    contagem[o.Motorista] =
+      (contagem[o.Motorista] || 0) + 1;
+  });
+
+  const top5 = Object.entries(contagem)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,5);
+
+  if (grafico) grafico.destroy();
+
+  grafico = new Chart(graficoMotoristas, {
+    type: "bar",
+    data: {
+      labels: top5.map(i => i[0]),
+      datasets: [{
+        data: top5.map(i => i[1])
+      }]
+    }
+  });
+}
+
+/* ===== OS ===== */
+async function buscarOS() {
+  const mes = document.getElementById("mesOS").value;
+  if (!mes) return alert("Selecione o mês");
+
+  tabelaOS.innerHTML =
+    "<tr><td colspan='5'>Carregando...</td></tr>";
+
+  const res = await fetch(`${URL_OS}?mes=${mes}`);
+  const dados = await res.json();
+
+  if (!Array.isArray(dados)) {
+    tabelaOS.innerHTML =
+      "<tr><td colspan='5'>Erro ao carregar OS</td></tr>";
+    return;
+  }
+
+  resumoOS.innerHTML =
+    `<strong>Total de OS:</strong> ${dados.length}`;
+
+  tabelaOS.innerHTML = "";
+
+  dados.forEach(o => {
+    tabelaOS.innerHTML += `
+      <tr>
+        <td>${o.Data || ""}</td>
+        <td>${o.Fiscal || ""}</td>
+        <td>${o["Nº de Ordem"] || ""}</td>
+        <td>${o.Observação || ""}</td>
+        <td>${o["Nº da OS"] || ""}</td>
+      </tr>`;
+  });
+}
+
+/* ===== MÊS PADRÃO ===== */
+const hoje = new Date().toISOString().slice(0,7);
+document.getElementById("mesOcorrencia").value = hoje;
+document.getElementById("mesOS").value = hoje;
+</script>
+
+</body>
+</html>
