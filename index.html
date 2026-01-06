@@ -65,24 +65,9 @@ th, td {
 th {
   background: #eee;
 }
-.error {
-  color: red;
-  font-weight: bold;
-}
 .positivo { color: green; font-weight: bold; }
 .negativo { color: red; font-weight: bold; }
-
-/* STATUS OCORRÊNCIAS */
-.status-tratado {
-  background-color: #d4edda;
-  color: #155724;
-  font-weight: bold;
-}
-.status-nao-tratado {
-  background-color: #f8d7da;
-  color: #721c24;
-  font-weight: bold;
-}
+.error { color: red; font-weight: bold; }
 </style>
 </head>
 
@@ -101,14 +86,9 @@ th {
 <!-- ================= OCORRÊNCIAS ================= -->
 <section id="ocorrencias" class="active">
   <h2>Resumo de Ocorrências</h2>
-
-  <div class="controls">
-    <input type="month" id="mesOcorrencia">
-    <button onclick="buscarOcorrencias()">Buscar</button>
-  </div>
-
+  <input type="month" id="mesOcorrencia">
+  <button onclick="buscarOcorrencias()">Buscar</button>
   <canvas id="graficoMotoristas" height="120"></canvas>
-
   <table>
     <thead>
       <tr>
@@ -124,15 +104,10 @@ th {
 
 <!-- ================= OS ================= -->
 <section id="os">
-  <h2>Resumo OS - Manutenção</h2>
-
-  <div class="controls">
-    <input type="month" id="mesOS">
-    <button onclick="buscarOS()">Buscar</button>
-  </div>
-
+  <h2>Resumo OS</h2>
+  <input type="month" id="mesOS">
+  <button onclick="buscarOS()">Buscar</button>
   <div id="resumoOS"></div>
-
   <table>
     <thead>
       <tr>
@@ -147,50 +122,43 @@ th {
   </table>
 </section>
 
-<!-- ================= RESUMO DE LINHAS ================= -->
+<!-- ================= LINHAS ================= -->
 <section id="linhas">
   <h2>Resumo de Linhas</h2>
 
   <div class="controls">
-  <select id="anoLinhas">
-  <option value="">Ano</option>
-  <option value="2024">2024</option>
-  <option value="2025">2025</option>
-  <option value="2026">2026</option>
-  <option value="2027">2027</option>
-</select>
+    <select id="anoLinhas">
+      <option value="">Ano</option>
+      <option value="2024">2024</option>
+      <option value="2025">2025</option>
+      <option value="2026">2026</option>
+      <option value="2027">2027</option>
+    </select>
 
-<select id="mesLinhas">
-  <option value="">Mês</option>
-  <option value="1">Janeiro</option>
-  <option value="2">Fevereiro</option>
-  <option value="3">Março</option>
-  <option value="4">Abril</option>
-  <option value="5">Maio</option>
-  <option value="6">Junho</option>
-  <option value="7">Julho</option>
-  <option value="8">Agosto</option>
-  <option value="9">Setembro</option>
-  <option value="10">Outubro</option>
-  <option value="11">Novembro</option>
-  <option value="12">Dezembro</option>
-</select>
+    <select id="mesLinhas">
+      <option value="">Mês</option>
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3">Março</option>
+      <option value="4">Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
 
     <select id="grupoLinhas">
-      <option value="todos">Todos os Grupos</option>
+      <option value="todos">Todos</option>
       <option>Grupo Alagoinhas</option>
       <option>Grupo Recôncavo</option>
       <option>Grupo Regional</option>
     </select>
-    <button onclick="buscarLinhas()">Buscar</button>
-  </div>
 
-  <div class="controls">
-    <label><input type="checkbox" checked value="Linha"> Linha</label>
-    <label><input type="checkbox" checked value="Receita"> Receita</label>
-    <label><input type="checkbox" checked value="Km_Rodado"> Km Rodado</label>
-    <label><input type="checkbox" checked value="Qtd_Pax"> Pax</label>
-    <label><input type="checkbox" checked value="R$/KM"> R$/KM</label>
+    <button onclick="buscarLinhas()">Buscar</button>
   </div>
 
   <table>
@@ -200,29 +168,24 @@ th {
 </section>
 
 <script>
-/* ================== URLs DAS APIs ================== */
+/* ================= URLs ================= */
 const URL_OCORRENCIAS = "https://script.google.com/macros/s/AKfycbxhq42uCNBiYz8_AhOVUMYKsZwBLohidhBs1PCHfihIMaM9En-gwcBm3M_JUwqrVITZ/exec";
 const URL_OS = "https://script.google.com/macros/s/AKfycbyKVm2k3rYD7WoDkPAaJ3kEsn7lPYccpnt0zY-ISrbXhMx3WLkrzvs8Q8jYT8kAbjT7/exec";
-
-/* 👉 NOVA API – RESUMO DE LINHAS */
 const URL_LINHAS = "https://script.google.com/macros/s/AKfycbz77iuV4v_zR8Qnw5Slw34mUHRxtz_k6GhfcQ8BmILY_cjKwNbh4gynvcs8ba-Ozhe3TA/exec";
 
-let grafico;
-let dadosLinhas = [];
-/* ================== ELEMENTOS DO DOM ================== */
+/* ================= ELEMENTOS ================= */
 const anoLinhas = document.getElementById("anoLinhas");
 const mesLinhas = document.getElementById("mesLinhas");
 const grupoLinhas = document.getElementById("grupoLinhas");
 const theadLinhas = document.getElementById("theadLinhas");
 const tbodyLinhas = document.getElementById("tbodyLinhas");
 
-const mesOcorrencia = document.getElementById("mesOcorrencia");
-const mesOS = document.getElementById("mesOS");
-
 const tabelaOcorrencias = document.getElementById("tabelaOcorrencias");
 const tabelaOS = document.getElementById("tabelaOS");
 const resumoOS = document.getElementById("resumoOS");
 const graficoMotoristas = document.getElementById("graficoMotoristas");
+
+let grafico;
 
 /* ================= NAVEGAÇÃO ================= */
 function showTab(id, btn) {
@@ -232,143 +195,51 @@ function showTab(id, btn) {
   btn.classList.add("active");
 }
 
-/* ================= OCORRÊNCIAS ================= */
-async function buscarOcorrencias() {
-  const mes = mesOcorrencia.value;
-  tabelaOcorrencias.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
-
-  const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
-  const data = await res.json();
-
-  tabelaOcorrencias.innerHTML = "";
-  const contagem = {};
-
-  data.forEach(o => {
-    const status = (o.Status || "").toLowerCase();
-    const classe = status === "tratado" ? "status-tratado" :
-                   status.includes("nao") ? "status-nao-tratado" : "";
-
-    tabelaOcorrencias.innerHTML += `
-      <tr>
-        <td>${o.Data || ""}</td>
-        <td>${o.Motorista || ""}</td>
-        <td>${o.Resumo || ""}</td>
-        <td class="${classe}">${o.Status || ""}</td>
-      </tr>`;
-    contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
-  });
-
-  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  if (grafico) grafico.destroy();
-  grafico = new Chart(graficoMotoristas, {
-    type: "bar",
-    data: {
-      labels: top5.map(i => i[0]),
-      datasets: [{ data: top5.map(i => i[1]) }]
-    }
-  });
-}
-
-/* ================= OS ================= */
-async function buscarOS() {
-  const mes = mesOS.value;
-  tabelaOS.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
-
-  const res = await fetch(`${URL_OS}?mes=${mes}`);
-  const dados = await res.json();
-
-  resumoOS.innerHTML = `<strong>Total de OS:</strong> ${dados.length}`;
-  tabelaOS.innerHTML = "";
-
-  dados.forEach(o => {
-    tabelaOS.innerHTML += `
-      <tr>
-        <td>${o.Data || ""}</td>
-        <td>${o.Fiscal || ""}</td>
-        <td>${o["Nº de Ordem"] || ""}</td>
-        <td>${o.Observação || ""}</td>
-        <td>${o["Nº da OS"] || ""}</td>
-      </tr>`;
-  });
-}
-
 /* ================= LINHAS ================= */
-fetch(URL_LINHAS)
-  .then(r => r.json())
-  .then(d => {
-    dadosLinhas = d.map(l => ({
-      ...l,
-      Ano: +l.Ano,
-      Mês: +l.Mês,
-      Receita: +l.Receita,
-      Km_Rodado: +l.Km_Rodado,
-      Qtd_Pax: +l.Qtd_Pax,
-      "R$/KM": +l["R$/KM"]
-    }));
-    carregarFiltrosLinhas();
-  });
-
-function carregarFiltrosLinhas() {
-  const anos = [2024, 2025, 2026, 2027];
-  const meses = [
-    {v:1, t:"Janeiro"}, {v:2, t:"Fevereiro"}, {v:3, t:"Março"},
-    {v:4, t:"Abril"}, {v:5, t:"Maio"}, {v:6, t:"Junho"},
-    {v:7, t:"Julho"}, {v:8, t:"Agosto"}, {v:9, t:"Setembro"},
-    {v:10, t:"Outubro"}, {v:11, t:"Novembro"}, {v:12, t:"Dezembro"}
-  ];
-
-  anoLinhas.innerHTML = "";
-  mesLinhas.innerHTML = "";
-
-  anos.forEach(a => {
-    anoLinhas.innerHTML += `<option value="${a}">${a}</option>`;
-  });
-
-  meses.forEach(m => {
-    mesLinhas.innerHTML += `<option value="${m.v}">${m.t}</option>`;
-  });
-
-  // Seleciona automaticamente o mês/ano atual
-  const hoje = new Date();
-  anoLinhas.value = hoje.getFullYear();
-  mesLinhas.value = hoje.getMonth() + 1;
-}
-
-function buscarLinhas() {
-  const ano = Number(document.getElementById("anoLinhas").value);
-  const mes = Number(document.getElementById("mesLinhas").value);
-  const grupo = document.getElementById("grupoLinhas").value;
+async function buscarLinhas() {
+  const ano = Number(anoLinhas.value);
+  const mes = Number(mesLinhas.value);
+  const grupo = grupoLinhas.value;
 
   if (!ano || !mes) {
     alert("Selecione o ano e o mês.");
     return;
   }
 
-  const campos = [...document.querySelectorAll("#linhas input:checked")]
-    .map(c => c.value);
+  tbodyLinhas.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
 
-  const filtrado = dadosLinhas.filter(l =>
+  let dados;
+  try {
+    const res = await fetch(URL_LINHAS);
+    dados = await res.json();
+  } catch {
+    tbodyLinhas.innerHTML = "<tr><td colspan='10'>Erro ao acessar a API</td></tr>";
+    return;
+  }
+
+  if (!Array.isArray(dados)) {
+    tbodyLinhas.innerHTML = "<tr><td colspan='10'>API retornou erro</td></tr>";
+    return;
+  }
+
+  const filtrado = dados.filter(l =>
     Number(l.Ano) === ano &&
     Number(l.Mês) === mes &&
     (grupo === "todos" || l.Grupo === grupo)
   );
 
   if (filtrado.length === 0) {
-    tbodyLinhas.innerHTML =
-      "<tr><td colspan='10'>Nenhum dado encontrado para os filtros selecionados</td></tr>";
+    tbodyLinhas.innerHTML = "<tr><td colspan='10'>Nenhum dado encontrado</td></tr>";
     return;
   }
 
   theadLinhas.innerHTML =
-    "<tr>" +
-    campos.map(c => `<th>${c}</th>`).join("") +
-    "<th>Δ R$/KM</th></tr>";
+    "<tr><th>Linha</th><th>Receita</th><th>KM</th><th>Pax</th><th>R$/KM</th><th>Δ R$/KM</th></tr>";
 
   tbodyLinhas.innerHTML = "";
 
   filtrado.forEach(l => {
-    const ant = dadosLinhas.find(a =>
+    const ant = dados.find(a =>
       a.Linha === l.Linha &&
       Number(a.Mês) === mes &&
       Number(a.Ano) === ano - 1
@@ -380,19 +251,17 @@ function buscarLinhas() {
 
     tbodyLinhas.innerHTML += `
       <tr>
-        ${campos.map(c => `<td>${l[c] ?? ""}</td>`).join("")}
+        <td>${l.Linha}</td>
+        <td>${l.Receita}</td>
+        <td>${l.Km_Rodado}</td>
+        <td>${l.Qtd_Pax}</td>
+        <td>${l["R$/KM"]}</td>
         <td class="${diff >= 0 ? "positivo" : "negativo"}">
           ${diff === null ? "-" : diff.toFixed(1) + "%"}
         </td>
       </tr>`;
   });
 }
-
-
-/* ================= DATAS PADRÃO ================= */
-const hoje = new Date().toISOString().slice(0,7);
-mesOcorrencia.value = hoje;
-mesOS.value = hoje;
 </script>
 
 </body>
