@@ -274,12 +274,29 @@ fetch(URL_LINHAS)
   });
 
 function carregarFiltrosLinhas() {
-  [...new Set(dadosLinhas.map(d => d.Ano))].sort().forEach(a =>
-    anoLinhas.innerHTML += `<option>${a}</option>`
-  );
-  [...new Set(dadosLinhas.map(d => d.Mês))].sort().forEach(m =>
-    mesLinhas.innerHTML += `<option>${m}</option>`
-  );
+  const anos = [2024, 2025, 2026, 2027];
+  const meses = [
+    {v:1, t:"Janeiro"}, {v:2, t:"Fevereiro"}, {v:3, t:"Março"},
+    {v:4, t:"Abril"}, {v:5, t:"Maio"}, {v:6, t:"Junho"},
+    {v:7, t:"Julho"}, {v:8, t:"Agosto"}, {v:9, t:"Setembro"},
+    {v:10, t:"Outubro"}, {v:11, t:"Novembro"}, {v:12, t:"Dezembro"}
+  ];
+
+  anoLinhas.innerHTML = "";
+  mesLinhas.innerHTML = "";
+
+  anos.forEach(a => {
+    anoLinhas.innerHTML += `<option value="${a}">${a}</option>`;
+  });
+
+  meses.forEach(m => {
+    mesLinhas.innerHTML += `<option value="${m.v}">${m.t}</option>`;
+  });
+
+  // Seleciona automaticamente o mês/ano atual
+  const hoje = new Date();
+  anoLinhas.value = hoje.getFullYear();
+  mesLinhas.value = hoje.getMonth() + 1;
 }
 
 function buscarLinhas() {
