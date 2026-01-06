@@ -13,13 +13,13 @@ body {
   font-family: Arial, sans-serif;
   background: #f4f6f8;
 }
+
 header {
   background: #0b2545;
   padding: 10px 20px;
 }
-header img {
-  height: 50px;
-}
+header img { height: 50px; }
+
 nav {
   display: flex;
   background: #163a63;
@@ -37,20 +37,22 @@ nav button.active {
   background: #0b2545;
   font-weight: bold;
 }
+
 section {
   display: none;
   padding: 20px;
 }
-section.active {
-  display: block;
-}
+section.active { display: block; }
+
 .controls {
   margin-bottom: 15px;
 }
+
 select, button, input {
   padding: 8px;
   margin-right: 10px;
 }
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -62,12 +64,43 @@ th, td {
   font-size: 14px;
   text-align: center;
 }
-th {
-  background: #eee;
-}
+th { background: #eee; }
+
 .positivo { color: green; font-weight: bold; }
 .negativo { color: red; font-weight: bold; }
-.error { color: red; font-weight: bold; }
+
+/* ===== CARDS ===== */
+.cards-resumo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.card {
+  background: #fff;
+  border-left: 5px solid #0b2545;
+  padding: 12px;
+  border-radius: 8px;
+}
+.card .label {
+  font-size: 12px;
+  color: #6b7280;
+}
+.card .valor {
+  font-size: 18px;
+  font-weight: bold;
+  color: #0b2545;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .cards-resumo { grid-template-columns: 1fr 1fr; }
+  table { display: block; overflow-x: auto; white-space: nowrap; }
+  nav button { font-size: 14px; padding: 12px 6px; }
+}
+@media (max-width: 480px) {
+  .cards-resumo { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 
@@ -78,54 +111,34 @@ th {
 </header>
 
 <nav>
-  <button class="active" onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
-  <button onclick="showTab('os', this)">Resumo OS</button>
-  <button onclick="showTab('linhas', this)">Resumo de Linhas</button>
+  <button class="active" onclick="showTab('linhas', this)">Resumo de Linhas</button>
 </nav>
 
-<!-- ================= OCORRÊNCIAS ================= -->
-<section id="ocorrencias" class="active">
-  <h2>Resumo de Ocorrências</h2>
-  <input type="month" id="mesOcorrencia">
-  <button onclick="buscarOcorrencias()">Buscar</button>
-  <canvas id="graficoMotoristas" height="120"></canvas>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Motorista</th>
-        <th>Resumo</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaOcorrencias"></tbody>
-  </table>
-</section>
-
-<!-- ================= OS ================= -->
-<section id="os">
-  <h2>Resumo OS</h2>
-  <input type="month" id="mesOS">
-  <button onclick="buscarOS()">Buscar</button>
-  <div id="resumoOS"></div>
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Fiscal</th>
-        <th>Nº Ordem</th>
-        <th>Observação</th>
-        <th>Nº OS</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaOS"></tbody>
-  </table>
-</section>
-
 <!-- ================= LINHAS ================= -->
-<section id="linhas">
+<section id="linhas" class="active">
   <h2>Resumo de Linhas</h2>
 
+  <!-- CARDS -->
+  <div class="cards-resumo">
+    <div class="card">
+      <span class="label">Receita Total</span>
+      <span class="valor" id="cardReceita">R$ 0,00</span>
+    </div>
+    <div class="card">
+      <span class="label">KM Rodado</span>
+      <span class="valor" id="cardKm">0</span>
+    </div>
+    <div class="card">
+      <span class="label">Pax</span>
+      <span class="valor" id="cardPax">0</span>
+    </div>
+    <div class="card">
+      <span class="label">R$/KM Médio</span>
+      <span class="valor" id="cardRkm">0,00</span>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
   <div class="controls">
     <select id="anoLinhas">
       <option value="">Ano</option>
@@ -161,41 +174,45 @@ th {
     <button onclick="buscarLinhas()">Buscar</button>
   </div>
 
+  <!-- TABELA -->
   <table>
-    <thead id="theadLinhas"></thead>
+    <thead>
+      <tr>
+        <th>Linha</th>
+        <th>Receita</th>
+        <th>KM</th>
+        <th>Pax</th>
+        <th>R$/KM</th>
+        <th>Δ R$/KM</th>
+      </tr>
+    </thead>
     <tbody id="tbodyLinhas"></tbody>
   </table>
 </section>
 
 <script>
-/* ================= URLs ================= */
-const URL_OCORRENCIAS = "https://script.google.com/macros/s/AKfycbxhq42uCNBiYz8_AhOVUMYKsZwBLohidhBs1PCHfihIMaM9En-gwcBm3M_JUwqrVITZ/exec";
-const URL_OS = "https://script.google.com/macros/s/AKfycbyKVm2k3rYD7WoDkPAaJ3kEsn7lPYccpnt0zY-ISrbXhMx3WLkrzvs8Q8jYT8kAbjT7/exec";
 const URL_LINHAS = "https://script.google.com/macros/s/AKfycbwlFxLgeub2VKAMwxCW8IBqVQliphQzqOBiSGyyJbjlLhKv882wQdupBxuPZQw1klz8Cg/exec";
 
-/* ================= ELEMENTOS ================= */
 const anoLinhas = document.getElementById("anoLinhas");
 const mesLinhas = document.getElementById("mesLinhas");
 const grupoLinhas = document.getElementById("grupoLinhas");
-const theadLinhas = document.getElementById("theadLinhas");
 const tbodyLinhas = document.getElementById("tbodyLinhas");
 
-const tabelaOcorrencias = document.getElementById("tabelaOcorrencias");
-const tabelaOS = document.getElementById("tabelaOS");
-const resumoOS = document.getElementById("resumoOS");
-const graficoMotoristas = document.getElementById("graficoMotoristas");
-
-let grafico;
-
-/* ================= NAVEGAÇÃO ================= */
-function showTab(id, btn) {
-  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  btn.classList.add("active");
+/* ===== UTIL ===== */
+function formatarMoeda(v) {
+  return Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+function formatarDecimal(v, c = 2) {
+  return Number(v).toLocaleString("pt-BR", {
+    minimumFractionDigits: c,
+    maximumFractionDigits: c
+  });
+}
+function somar(arr, campo) {
+  return arr.reduce((acc, cur) => acc + (Number(cur[campo]) || 0), 0);
 }
 
-/* ================= LINHAS ================= */
+/* ===== BUSCAR LINHAS ===== */
 async function buscarLinhas() {
   const ano = Number(anoLinhas.value);
   const mes = Number(mesLinhas.value);
@@ -206,21 +223,10 @@ async function buscarLinhas() {
     return;
   }
 
-  tbodyLinhas.innerHTML = "<tr><td colspan='10'>Carregando...</td></tr>";
+  tbodyLinhas.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
 
-  let dados;
-  try {
-    const res = await fetch(URL_LINHAS);
-    dados = await res.json();
-  } catch {
-    tbodyLinhas.innerHTML = "<tr><td colspan='10'>Erro ao acessar a API</td></tr>";
-    return;
-  }
-
-  if (!Array.isArray(dados)) {
-    tbodyLinhas.innerHTML = "<tr><td colspan='10'>API retornou erro</td></tr>";
-    return;
-  }
+  const res = await fetch(URL_LINHAS);
+  const dados = await res.json();
 
   const filtrado = dados.filter(l =>
     Number(l.Ano) === ano &&
@@ -228,13 +234,21 @@ async function buscarLinhas() {
     (grupo === "todos" || l.Grupo === grupo)
   );
 
-  if (filtrado.length === 0) {
-    tbodyLinhas.innerHTML = "<tr><td colspan='10'>Nenhum dado encontrado</td></tr>";
+  if (!filtrado.length) {
+    tbodyLinhas.innerHTML = "<tr><td colspan='6'>Nenhum dado encontrado</td></tr>";
     return;
   }
 
-  theadLinhas.innerHTML =
-    "<tr><th>Linha</th><th>Receita</th><th>KM</th><th>Pax</th><th>R$/KM</th><th>Δ R$/KM</th></tr>";
+  /* CARDS */
+  const totalReceita = somar(filtrado, "Receita");
+  const totalKm = somar(filtrado, "Km_Rodado");
+  const totalPax = somar(filtrado, "Qtd_Pax");
+  const rkmMedio = totalKm > 0 ? totalReceita / totalKm : 0;
+
+  cardReceita.innerText = formatarMoeda(totalReceita);
+  cardKm.innerText = formatarDecimal(totalKm, 0);
+  cardPax.innerText = formatarDecimal(totalPax, 0);
+  cardRkm.innerText = formatarDecimal(rkmMedio, 2);
 
   tbodyLinhas.innerHTML = "";
 
@@ -246,22 +260,24 @@ async function buscarLinhas() {
     );
 
     const diff = ant
-      ? ((Number(l["R$/KM"]) - Number(ant["R$/KM"])) / Number(ant["R$/KM"])) * 100
+      ? ((l["R$/KM"] - ant["R$/KM"]) / ant["R$/KM"]) * 100
       : null;
 
     tbodyLinhas.innerHTML += `
       <tr>
         <td>${l.Linha}</td>
-        <td>${l.Receita}</td>
-        <td>${l.Km_Rodado}</td>
-        <td>${l.Qtd_Pax}</td>
-        <td>${l["R$/KM"]}</td>
+        <td>${formatarMoeda(l.Receita)}</td>
+        <td>${formatarDecimal(l.Km_Rodado, 0)}</td>
+        <td>${formatarDecimal(l.Qtd_Pax, 0)}</td>
+        <td>${formatarDecimal(l["R$/KM"], 2)}</td>
         <td class="${diff >= 0 ? "positivo" : "negativo"}">
           ${diff === null ? "-" : diff.toFixed(1) + "%"}
         </td>
       </tr>`;
   });
 }
+
+function showTab(id, btn) {}
 </script>
 
 </body>
