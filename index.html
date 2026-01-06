@@ -336,40 +336,58 @@ function carregarFiltrosLinhas() {
 }
 
 function buscarLinhas() {
-  const ano = +anoLinhas.value;
-  const mes = +mesLinhas.value;
-  const grupo = grupoLinhas.value;
-  const campos = [...document.querySelectorAll("#linhas input:checked")].map(c => c.value);
+  const ano = Number(document.getElementById("anoLinhas").value);
+  const mes = Number(document.getElementById("mesLinhas").value);
+  const grupo = document.getElementById("grupoLinhas").value;
+
+  if (!ano || !mes) {
+    alert("Selecione o ano e o mês.");
+    return;
+  }
+
+  const campos = [...document.querySelectorAll("#linhas input:checked")]
+    .map(c => c.value);
 
   const filtrado = dadosLinhas.filter(l =>
-    l.Ano === ano &&
-    l.Mês === mes &&
+    Number(l.Ano) === ano &&
+    Number(l.Mês) === mes &&
     (grupo === "todos" || l.Grupo === grupo)
   );
 
+  if (filtrado.length === 0) {
+    tbodyLinhas.innerHTML =
+      "<tr><td colspan='10'>Nenhum dado encontrado para os filtros selecionados</td></tr>";
+    return;
+  }
+
   theadLinhas.innerHTML =
-    "<tr>" + campos.map(c => `<th>${c}</th>`).join("") + "<th>Δ R$/KM</th></tr>";
+    "<tr>" +
+    campos.map(c => `<th>${c}</th>`).join("") +
+    "<th>Δ R$/KM</th></tr>";
 
   tbodyLinhas.innerHTML = "";
 
   filtrado.forEach(l => {
     const ant = dadosLinhas.find(a =>
-      a.Linha === l.Linha && a.Mês === mes && a.Ano === ano - 1
+      a.Linha === l.Linha &&
+      Number(a.Mês) === mes &&
+      Number(a.Ano) === ano - 1
     );
 
     const diff = ant
-      ? ((l["R$/KM"] - ant["R$/KM"]) / ant["R$/KM"]) * 100
+      ? ((Number(l["R$/KM"]) - Number(ant["R$/KM"])) / Number(ant["R$/KM"])) * 100
       : null;
 
     tbodyLinhas.innerHTML += `
       <tr>
-        ${campos.map(c => `<td>${l[c]}</td>`).join("")}
+        ${campos.map(c => `<td>${l[c] ?? ""}</td>`).join("")}
         <td class="${diff >= 0 ? "positivo" : "negativo"}">
           ${diff === null ? "-" : diff.toFixed(1) + "%"}
         </td>
       </tr>`;
   });
 }
+
 
 /* ================= DATAS PADRÃO ================= */
 const hoje = new Date().toISOString().slice(0,7);
