@@ -273,10 +273,26 @@ function showTab(id, btn) {
 /* ================= OCORRÊNCIAS (RESTAURADO) ================= */
 async function buscarOcorrencias() {
   const mes = document.getElementById("mesOcorrencia").value;
-  tabelaOcorrencias.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
 
-  const res = await fetch(`${URL_OCORRENCIAS}?mes=${mes}`);
+  if (!mes) {
+    alert("Selecione o mês");
+    return;
+  }
+
+  tabelaOcorrencias.innerHTML =
+    "<tr><td colspan='4'>Carregando...</td></tr>";
+
+  const res = await fetch(
+    `${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`
+  );
+
   const dados = await res.json();
+
+  if (!Array.isArray(dados)) {
+    tabelaOcorrencias.innerHTML =
+      "<tr><td colspan='4'>Erro ao carregar ocorrências</td></tr>";
+    return;
+  }
 
   tabelaOcorrencias.innerHTML = "";
   const contagem = {};
@@ -284,25 +300,33 @@ async function buscarOcorrencias() {
   dados.forEach(o => {
     tabelaOcorrencias.innerHTML += `
       <tr>
-        <td>${o.Data}</td>
-        <td>${o.Motorista}</td>
-        <td>${o.Resumo}</td>
-        <td>${o.Status}</td>
+        <td>${o.Data || ""}</td>
+        <td>${o.Motorista || ""}</td>
+        <td>${o.Resumo || ""}</td>
+        <td>${o.Status || ""}</td>
       </tr>`;
-    contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
+
+    contagem[o.Motorista] =
+      (contagem[o.Motorista] || 0) + 1;
   });
 
-  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const top5 = Object.entries(contagem)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
 
   if (grafico) grafico.destroy();
+
   grafico = new Chart(graficoMotoristas, {
     type: "bar",
     data: {
       labels: top5.map(i => i[0]),
-      datasets: [{ data: top5.map(i => i[1]) }]
+      datasets: [{
+        data: top5.map(i => i[1])
+      }]
     }
   });
 }
+
 
 /* ================= OS (RESTAURADO) ================= */
 async function buscarOS() {
