@@ -47,7 +47,7 @@ section.active {
 .controls {
   margin-bottom: 15px;
 }
-select, button {
+select, button, input {
   padding: 8px;
   margin-right: 10px;
 }
@@ -60,38 +60,28 @@ th, td {
   border: 1px solid #ddd;
   padding: 8px;
   font-size: 14px;
+  text-align: center;
 }
 th {
   background: #eee;
-}
-.summary-box {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-left: 5px solid #0b2545;
 }
 .error {
   color: red;
   font-weight: bold;
 }
-  input[type="month"] {
-  padding: 8px;
-  margin-right: 10px;
-}
+.positivo { color: green; font-weight: bold; }
+.negativo { color: red; font-weight: bold; }
 
-
-/* ===== STATUS OCORRÊNCIAS ===== */
+/* STATUS OCORRÊNCIAS */
 .status-tratado {
   background-color: #d4edda;
   color: #155724;
   font-weight: bold;
-  text-align: center;
 }
 .status-nao-tratado {
   background-color: #f8d7da;
   color: #721c24;
   font-weight: bold;
-  text-align: center;
 }
 </style>
 </head>
@@ -105,6 +95,7 @@ th {
 <nav>
   <button class="active" onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
   <button onclick="showTab('os', this)">Resumo OS</button>
+  <button onclick="showTab('linhas', this)">Resumo de Linhas</button>
 </nav>
 
 <!-- ================= OCORRÊNCIAS ================= -->
@@ -140,27 +131,62 @@ th {
     <button onclick="buscarOS()">Buscar</button>
   </div>
 
-  <div class="summary-box" id="resumoOS"></div>
+  <div id="resumoOS"></div>
 
   <table>
     <thead>
       <tr>
         <th>Data</th>
         <th>Fiscal</th>
-        <th>Nº de Ordem</th>
+        <th>Nº Ordem</th>
         <th>Observação</th>
-        <th>Nº da OS</th>
+        <th>Nº OS</th>
       </tr>
     </thead>
     <tbody id="tabelaOS"></tbody>
   </table>
 </section>
 
+<!-- ================= RESUMO DE LINHAS ================= -->
+<section id="linhas">
+  <h2>Resumo de Linhas</h2>
+
+  <div class="controls">
+    <select id="anoLinhas"></select>
+    <select id="mesLinhas"></select>
+    <select id="grupoLinhas">
+      <option value="todos">Todos os Grupos</option>
+      <option>Grupo Alagoinhas</option>
+      <option>Grupo Recôncavo</option>
+      <option>Grupo Regional</option>
+    </select>
+    <button onclick="buscarLinhas()">Buscar</button>
+  </div>
+
+  <div class="controls">
+    <label><input type="checkbox" checked value="Linha"> Linha</label>
+    <label><input type="checkbox" checked value="Receita"> Receita</label>
+    <label><input type="checkbox" checked value="Km_Rodado"> Km Rodado</label>
+    <label><input type="checkbox" checked value="Qtd_Pax"> Pax</label>
+    <label><input type="checkbox" checked value="R$/KM"> R$/KM</label>
+  </div>
+
+  <table>
+    <thead id="theadLinhas"></thead>
+    <tbody id="tbodyLinhas"></tbody>
+  </table>
+</section>
+
 <script>
+/* ================== URLs DAS APIs ================== */
 const URL_OCORRENCIAS = "https://script.google.com/macros/s/AKfycbxhq42uCNBiYz8_AhOVUMYKsZwBLohidhBs1PCHfihIMaM9En-gwcBm3M_JUwqrVITZ/exec";
 const URL_OS = "https://script.google.com/macros/s/AKfycbyKVm2k3rYD7WoDkPAaJ3kEsn7lPYccpnt0zY-ISrbXhMx3WLkrzvs8Q8jYT8kAbjT7/exec";
 
+/* 👉 NOVA API – RESUMO DE LINHAS */
+const URL_LINHAS = "https://script.google.com/macros/s/AKfycbz77iuV4v_zR8Qnw5Slw34mUHRxtz_k6GhfcQ8BmILY_cjKwNbh4gynvcs8ba-Ozhe3TA/exec";
+
 let grafico;
+let dadosLinhas = [];
 
 /* ================= NAVEGAÇÃO ================= */
 function showTab(id, btn) {
@@ -170,82 +196,42 @@ function showTab(id, btn) {
   btn.classList.add("active");
 }
 
-
 /* ================= OCORRÊNCIAS ================= */
 async function buscarOcorrencias() {
   const mes = mesOcorrencia.value;
   tabelaOcorrencias.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
 
-  try {
-    const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
-    const data = await res.json();
+  const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
+  const data = await res.json();
 
-    if (!Array.isArray(data)) {
-      tabelaOcorrencias.innerHTML = `
-        <tr>
-          <td colspan="4" class="error">
-            Erro: ${data.message || "Resposta inválida do servidor"}
-          </td>
-        </tr>`;
-      return;
-    }
+  tabelaOcorrencias.innerHTML = "";
+  const contagem = {};
 
-    if (data.length === 0) {
-      tabelaOcorrencias.innerHTML = `
-        <tr>
-          <td colspan="4">Nenhuma ocorrência encontrada para o mês selecionado</td>
-        </tr>`;
-      return;
-    }
+  data.forEach(o => {
+    const status = (o.Status || "").toLowerCase();
+    const classe = status === "tratado" ? "status-tratado" :
+                   status.includes("nao") ? "status-nao-tratado" : "";
 
-    tabelaOcorrencias.innerHTML = "";
-    const contagem = {};
-
-    data.forEach(o => {
-      const statusTxt = (o.Status || "").toLowerCase();
-      let classeStatus = "";
-
-      if (statusTxt === "tratado") {
-        classeStatus = "status-tratado";
-      } else if (statusTxt === "não tratado" || statusTxt === "nao tratado") {
-        classeStatus = "status-nao-tratado";
-      }
-
-      tabelaOcorrencias.innerHTML += `
-        <tr>
-          <td>${o.Data || ""}</td>
-          <td>${o.Motorista || ""}</td>
-          <td>${o.Resumo || ""}</td>
-          <td class="${classeStatus}">${o.Status || ""}</td>
-        </tr>`;
-
-      contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
-    });
-
-    const top5 = Object.entries(contagem)
-      .sort((a,b) => b[1] - a[1])
-      .slice(0,5);
-
-    if (grafico) grafico.destroy();
-    grafico = new Chart(document.getElementById("graficoMotoristas"), {
-      type: "bar",
-      data: {
-        labels: top5.map(i => i[0]),
-        datasets: [{
-          data: top5.map(i => i[1])
-        }]
-      }
-    });
-
-  } catch (err) {
-    tabelaOcorrencias.innerHTML = `
+    tabelaOcorrencias.innerHTML += `
       <tr>
-        <td colspan="4" class="error">
-          Erro de comunicação com o servidor
-        </td>
+        <td>${o.Data || ""}</td>
+        <td>${o.Motorista || ""}</td>
+        <td>${o.Resumo || ""}</td>
+        <td class="${classe}">${o.Status || ""}</td>
       </tr>`;
-    console.error(err);
-  }
+    contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
+  });
+
+  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  if (grafico) grafico.destroy();
+  grafico = new Chart(graficoMotoristas, {
+    type: "bar",
+    data: {
+      labels: top5.map(i => i[0]),
+      datasets: [{ data: top5.map(i => i[1]) }]
+    }
+  });
 }
 
 /* ================= OS ================= */
@@ -253,49 +239,89 @@ async function buscarOS() {
   const mes = mesOS.value;
   tabelaOS.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
 
-  try {
-    const res = await fetch(`${URL_OS}?mes=${mes}`);
-    const dados = await res.json();
+  const res = await fetch(`${URL_OS}?mes=${mes}`);
+  const dados = await res.json();
 
-    if (!Array.isArray(dados)) {
-      tabelaOS.innerHTML = `
-        <tr>
-          <td colspan="5" class="error">
-            Erro ao carregar OS
-          </td>
-        </tr>`;
-      return;
-    }
+  resumoOS.innerHTML = `<strong>Total de OS:</strong> ${dados.length}`;
+  tabelaOS.innerHTML = "";
 
-    resumoOS.innerHTML = `<strong>Total de OS no mês:</strong> ${dados.length}`;
-    tabelaOS.innerHTML = "";
-
-    dados.forEach(o => {
-      tabelaOS.innerHTML += `
-        <tr>
-          <td>${o.Data || ""}</td>
-          <td>${o.Fiscal || ""}</td>
-          <td>${o["Nº de Ordem"] || ""}</td>
-          <td>${o.Observação || ""}</td>
-          <td>${o["Nº da OS"] || ""}</td>
-        </tr>`;
-    });
-
-  } catch (err) {
-    tabelaOS.innerHTML = `
+  dados.forEach(o => {
+    tabelaOS.innerHTML += `
       <tr>
-        <td colspan="5" class="error">
-          Erro de comunicação com o servidor
-        </td>
+        <td>${o.Data || ""}</td>
+        <td>${o.Fiscal || ""}</td>
+        <td>${o["Nº de Ordem"] || ""}</td>
+        <td>${o.Observação || ""}</td>
+        <td>${o["Nº da OS"] || ""}</td>
       </tr>`;
-    console.error(err);
-  }
+  });
 }
 
-const hoje = new Date().toISOString().slice(0,7);
-document.getElementById("mesOcorrencia").value = hoje;
-document.getElementById("mesOS").value = hoje;
+/* ================= LINHAS ================= */
+fetch(URL_LINHAS)
+  .then(r => r.json())
+  .then(d => {
+    dadosLinhas = d.map(l => ({
+      ...l,
+      Ano: +l.Ano,
+      Mês: +l.Mês,
+      Receita: +l.Receita,
+      Km_Rodado: +l.Km_Rodado,
+      Qtd_Pax: +l.Qtd_Pax,
+      "R$/KM": +l["R$/KM"]
+    }));
+    carregarFiltrosLinhas();
+  });
 
+function carregarFiltrosLinhas() {
+  [...new Set(dadosLinhas.map(d => d.Ano))].sort().forEach(a =>
+    anoLinhas.innerHTML += `<option>${a}</option>`
+  );
+  [...new Set(dadosLinhas.map(d => d.Mês))].sort().forEach(m =>
+    mesLinhas.innerHTML += `<option>${m}</option>`
+  );
+}
+
+function buscarLinhas() {
+  const ano = +anoLinhas.value;
+  const mes = +mesLinhas.value;
+  const grupo = grupoLinhas.value;
+  const campos = [...document.querySelectorAll("#linhas input:checked")].map(c => c.value);
+
+  const filtrado = dadosLinhas.filter(l =>
+    l.Ano === ano &&
+    l.Mês === mes &&
+    (grupo === "todos" || l.Grupo === grupo)
+  );
+
+  theadLinhas.innerHTML =
+    "<tr>" + campos.map(c => `<th>${c}</th>`).join("") + "<th>Δ R$/KM</th></tr>";
+
+  tbodyLinhas.innerHTML = "";
+
+  filtrado.forEach(l => {
+    const ant = dadosLinhas.find(a =>
+      a.Linha === l.Linha && a.Mês === mes && a.Ano === ano - 1
+    );
+
+    const diff = ant
+      ? ((l["R$/KM"] - ant["R$/KM"]) / ant["R$/KM"]) * 100
+      : null;
+
+    tbodyLinhas.innerHTML += `
+      <tr>
+        ${campos.map(c => `<td>${l[c]}</td>`).join("")}
+        <td class="${diff >= 0 ? "positivo" : "negativo"}">
+          ${diff === null ? "-" : diff.toFixed(1) + "%"}
+        </td>
+      </tr>`;
+  });
+}
+
+/* ================= DATAS PADRÃO ================= */
+const hoje = new Date().toISOString().slice(0,7);
+mesOcorrencia.value = hoje;
+mesOS.value = hoje;
 </script>
 
 </body>
