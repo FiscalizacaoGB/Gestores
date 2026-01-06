@@ -8,17 +8,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-/* ===== ESTILO ORIGINAL (SEM ALTERAÇÕES) ===== */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f4f6f8;
 }
+
 header {
   background: #0b2545;
   padding: 10px 20px;
 }
 header img { height: 50px; }
+
 nav {
   display: flex;
   background: #163a63;
@@ -36,11 +37,17 @@ nav button.active {
   background: #0b2545;
   font-weight: bold;
 }
+
 section {
+  display: none;
   padding: 20px;
 }
+section.active {
+  display: block;
+}
+
 .controls { margin-bottom: 15px; }
-select, button, input { padding: 8px; margin-right: 10px; }
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -74,15 +81,18 @@ th { background: #eee; }
 </header>
 
 <nav>
-  <button class="active">Resumo Ocorrências</button>
-  <button>Resumo OS</button>
+  <button class="active" onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
+  <button onclick="showTab('os', this)">Resumo OS</button>
 </nav>
 
 <!-- ================= OCORRÊNCIAS ================= -->
-<section>
+<section id="ocorrencias" class="active">
   <h2>Resumo de Ocorrências</h2>
-  <input type="month" id="mesOcorrencia">
-  <button onclick="buscarOcorrencias()">Buscar</button>
+
+  <div class="controls">
+    <input type="month" id="mesOcorrencia">
+    <button onclick="buscarOcorrencias()">Buscar</button>
+  </div>
 
   <canvas id="graficoMotoristas" height="120"></canvas>
 
@@ -96,110 +106,4 @@ th { background: #eee; }
       </tr>
     </thead>
     <tbody id="tabelaOcorrencias"></tbody>
-  </table>
-</section>
-
-<hr>
-
-<!-- ================= OS ================= -->
-<section>
-  <h2>Resumo OS</h2>
-  <input type="month" id="mesOS">
-  <button onclick="buscarOS()">Buscar</button>
-
-  <div id="resumoOS"></div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Fiscal</th>
-        <th>Nº Ordem</th>
-        <th>Observação</th>
-        <th>Nº OS</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaOS"></tbody>
-  </table>
-</section>
-
-<script>
-const URL_OCORRENCIAS = "https://script.google.com/macros/s/AKfycbwppmMfiEuUhfwjWUOmne3MsznX7w4ztoTm8FZgcSxNEceWAiaY-31M7rVvXUkl8gfB/exec";
-const URL_OS = "https://script.google.com/macros/s/AKfycbxPC3JLFZm0w6cM42UTRc_KWHLXVyLjWBI4P89saGEHsac4g1BusgsHhP77H6JVo4Db/exec";
-
-const tabelaOcorrencias = document.getElementById("tabelaOcorrencias");
-const tabelaOS = document.getElementById("tabelaOS");
-const resumoOS = document.getElementById("resumoOS");
-const graficoMotoristas = document.getElementById("graficoMotoristas");
-
-let grafico;
-
-/* ===== OCORRÊNCIAS ===== */
-async function buscarOcorrencias() {
-  const mes = document.getElementById("mesOcorrencia").value;
-  if (!mes) return alert("Selecione o mês");
-
-  tabelaOcorrencias.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
-
-  const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
-  const dados = await res.json();
-
-  tabelaOcorrencias.innerHTML = "";
-  const contagem = {};
-
-  dados.forEach(o => {
-    const status = (o.Status || "").toLowerCase();
-    let classe = "";
-
-    if (status === "tratado") classe = "status-tratado";
-    if (status === "não tratado" || status === "nao tratado")
-      classe = "status-nao-tratado";
-
-    tabelaOcorrencias.innerHTML += `
-      <tr>
-        <td>${o.Data}</td>
-        <td>${o.Motorista}</td>
-        <td>${o.Resumo}</td>
-        <td class="${classe}">${o.Status}</td>
-      </tr>`;
-    contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
-  });
-
-  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  if (grafico) grafico.destroy();
-  grafico = new Chart(graficoMotoristas, {
-    type: "bar",
-    data: {
-      labels: top5.map(i=>i[0]),
-      datasets: [{ data: top5.map(i=>i[1]) }]
-    }
-  });
-}
-
-/* ===== OS ===== */
-async function buscarOS() {
-  const mes = document.getElementById("mesOS").value;
-  tabelaOS.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
-
-  const res = await fetch(`${URL_OS}?mes=${mes}`);
-  const dados = await res.json();
-
-  resumoOS.innerHTML = `<strong>Total de OS:</strong> ${dados.length}`;
-  tabelaOS.innerHTML = "";
-
-  dados.forEach(o => {
-    tabelaOS.innerHTML += `
-      <tr>
-        <td>${o.Data}</td>
-        <td>${o.Fiscal}</td>
-        <td>${o["Nº de Ordem"]}</td>
-        <td>${o.Observação}</td>
-        <td>${o["Nº da OS"]}</td>
-      </tr>`;
-  });
-}
-</script>
-
-</body>
-</html>
+  </table
