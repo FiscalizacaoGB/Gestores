@@ -233,7 +233,22 @@ const URL_OCORRENCIAS = "https://script.google.com/macros/s/AKfycbwppmMfiEuUhfwj
 const URL_OS = "https://script.google.com/macros/s/AKfycbxPC3JLFZm0w6cM42UTRc_KWHLXVyLjWBI4P89saGEHsac4g1BusgsHhP77H6JVo4Db/exec";
 const URL_LINHAS = "https://script.google.com/macros/s/AKfycbwlFxLgeub2VKAMwxCW8IBqVQliphQzqOBiSGyyJbjlLhKv882wQdupBxuPZQw1klz8Cg/exec";
 
-/* ===== UTIL ===== */
+/* ================= ELEMENTOS ================= */
+const anoLinhas = document.getElementById("anoLinhas");
+const mesLinhas = document.getElementById("mesLinhas");
+const grupoLinhas = document.getElementById("grupoLinhas");
+
+const tbodyLinhas = document.getElementById("tbodyLinhas");
+const theadLinhas = document.getElementById("theadLinhas");
+
+const tabelaOcorrencias = document.getElementById("tabelaOcorrencias");
+const tabelaOS = document.getElementById("tabelaOS");
+const resumoOS = document.getElementById("resumoOS");
+const graficoMotoristas = document.getElementById("graficoMotoristas");
+
+let grafico;
+
+/* ================= UTIL ================= */
 function formatarMoeda(v) {
   return Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -247,7 +262,7 @@ function somar(arr, campo) {
   return arr.reduce((acc, cur) => acc + (Number(cur[campo]) || 0), 0);
 }
 
-/* ===== NAVEGAÇÃO ===== */
+/* ================= NAVEGAÇÃO ================= */
 function showTab(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
@@ -255,26 +270,94 @@ function showTab(id, btn) {
   btn.classList.add("active");
 }
 
-/* ===== LINHAS ===== */
-async function buscarLinhas() {
-  const ano = Number(document.getElementById("anoLinhas").value);
-  const mes = Number(document.getElementById("mesLinhas").value);
-  const grupo = document.getElementById("grupoLinhas").value;
+/* ================= OCORRÊNCIAS (RESTAURADO) ================= */
+async function buscarOcorrencias() {
+  const mes = document.getElementById("mesOcorrencia").value;
+  tabelaOcorrencias.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
 
-  if (!ano || !mes) return alert("Selecione ano e mês");
-
-  const res = await fetch(URL_LINHAS);
+  const res = await fetch(`${URL_OCORRENCIAS}?mes=${mes}`);
   const dados = await res.json();
 
-  const filtrado = dados.filter(l =>
+  tabelaOcorrencias.innerHTML = "";
+  const contagem = {};
+
+  dados.forEach(o => {
+    tabelaOcorrencias.innerHTML += `
+      <tr>
+        <td>${o.Data}</td>
+        <td>${o.Motorista}</td>
+        <td>${o.Resumo}</td>
+        <td>${o.Status}</td>
+      </tr>`;
+    contagem[o.Motorista] = (contagem[o.Motorista] || 0) + 1;
+  });
+
+  const top5 = Object.entries(contagem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  if (grafico) grafico.destroy();
+  grafico = new Chart(graficoMotoristas, {
+    type: "bar",
+    data: {
+      labels: top5.map(i => i[0]),
+      datasets: [{ data: top5.map(i => i[1]) }]
+    }
+  });
+}
+
+/* ================= OS (RESTAURADO) ================= */
+async function buscarOS() {
+  const mes = document.getElementById("mesOS").value;
+  tabelaOS.innerHTML = "<tr><td colspan='5'>Carregando...</td></tr>";
+
+  const res = await fetch(`${URL_OS}?mes=${mes}`);
+  const dados = await res.json();
+
+  resumoOS.innerHTML = `<strong>Total de OS:</strong> ${dados.length}`;
+  tabelaOS.innerHTML = "";
+
+  dados.forEach(o => {
+    tabelaOS.innerHTML += `
+      <tr>
+        <td>${o.Data}</td>
+        <td>${o.Fiscal}</td>
+        <td>${o["Nº de Ordem"]}</td>
+        <td>${o.Observação}</td>
+        <td>${o["Nº da OS"]}</td>
+      </tr>`;
+  });
+}
+
+/* ================= LINHAS (COMPARATIVO CORRIGIDO) ================= */
+async function buscarLinhas() {
+  const ano = Number(anoLinhas.value);
+  const mes = Number(mesLinhas.value);
+  const grupo = grupoLinhas.value;
+
+  if (!ano || !mes) {
+    alert("Selecione ano e mês");
+    return;
+  }
+
+  tbodyLinhas.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
+
+  const res = await fetch(URL_LINHAS);
+  const dados = await res.json(); // ⚠️ dataset COMPLETO
+
+  const atual = dados.filter(l =>
     Number(l.Ano) === ano &&
     Number(l.Mês) === mes &&
     (grupo === "todos" || l.Grupo === grupo)
   );
 
-  const totalReceita = somar(filtrado, "Receita");
-  const totalKm = somar(filtrado, "Km_Rodado");
-  const totalPax = somar(filtrado, "Qtd_Pax");
+  if (!atual.length) {
+    tbodyLinhas.innerHTML = "<tr><td colspan='6'>Nenhum dado encontrado</td></tr>";
+    return;
+  }
+
+  /* ===== CARDS ===== */
+  const totalReceita = somar(atual, "Receita");
+  const totalKm = somar(atual, "Km_Rodado");
+  const totalPax = somar(atual, "Qtd_Pax");
   const rkmMedio = totalKm > 0 ? totalReceita / totalKm : 0;
 
   cardReceita.innerText = formatarMoeda(totalReceita);
@@ -283,7 +366,18 @@ async function buscarLinhas() {
   cardRkm.innerText = formatarDecimal(rkmMedio, 2);
 
   tbodyLinhas.innerHTML = "";
-  filtrado.forEach(l => {
+
+  atual.forEach(l => {
+    const anterior = dados.find(a =>
+      a.Linha === l.Linha &&
+      Number(a.Ano) === ano - 1 &&
+      Number(a.Mês) === mes
+    );
+
+    const diff = anterior
+      ? ((l["R$/KM"] - anterior["R$/KM"]) / anterior["R$/KM"]) * 100
+      : null;
+
     tbodyLinhas.innerHTML += `
       <tr>
         <td>${l.Linha}</td>
@@ -291,10 +385,13 @@ async function buscarLinhas() {
         <td>${formatarDecimal(l.Km_Rodado, 0)}</td>
         <td>${formatarDecimal(l.Qtd_Pax, 0)}</td>
         <td>${formatarDecimal(l["R$/KM"], 2)}</td>
-        <td>-</td>
+        <td class="${diff >= 0 ? "positivo" : "negativo"}">
+          ${diff === null ? "-" : diff.toFixed(1) + "%"}
+        </td>
       </tr>`;
   });
 }
+</script>
 </script>
 
 </body>
