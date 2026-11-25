@@ -8,97 +8,126 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+:root {
+  --navy: #0b2545;
+  --navy2: #163a63;
+  --serie: #1f4e8c;
+  --texto: #111827;
+  --muted: #6b7280;
+  --borda: #e5e7eb;
+  --bg: #f4f6f8;
+}
+* { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--texto);
 }
 
 /* ===== HEADER ===== */
 header {
-  background: #0b2545;
+  background: var(--navy);
   padding: 10px 20px;
+  display: flex; align-items: center; gap: 14px;
 }
-header img {
-  height: 50px;
-}
+header img { height: 50px; }
+header .titulo { color: #fff; font-size: 18px; font-weight: 600; }
 
 /* ===== NAV ===== */
-nav {
-  display: flex;
-  background: #163a63;
-}
+nav { display: flex; background: var(--navy2); overflow-x: auto; }
 nav button {
-  flex: 1;
-  padding: 15px;
-  border: none;
-  background: none;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
+  flex: 1; padding: 15px; border: none; background: none;
+  color: #fff; font-size: 16px; cursor: pointer; white-space: nowrap;
+  border-bottom: 3px solid transparent;
 }
-nav button.active {
-  background: #0b2545;
-  font-weight: bold;
-}
+nav button.active { background: var(--navy); font-weight: bold; border-bottom-color: #facc15; }
 
 /* ===== SECTIONS ===== */
-section {
-  display: none;
-  padding: 20px;
-}
-section.active {
-  display: block;
-}
+section { display: none; padding: 20px; max-width: 1280px; margin: 0 auto; }
+section.active { display: block; }
+h2 { margin: 0 0 14px 0; font-size: 22px; }
+h3 { margin: 0 0 4px 0; font-size: 16px; }
+.sub { color: var(--muted); font-size: 13px; margin: 0 0 12px 0; }
 
 /* ===== CONTROLS ===== */
 .controls {
-  margin-bottom: 15px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+  margin-bottom: 16px;
 }
-input, button {
-  padding: 8px;
-  margin-right: 10px;
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select, button {
+  padding: 9px 12px; font-size: 15px; border-radius: 8px;
+  border: 1px solid #d1d5db; background: #fff; color: var(--texto);
 }
+button { cursor: pointer; }
+.btn-primary { background: var(--navy); color: #fff; border-color: var(--navy); font-weight: 600; }
+.btn-primary:hover { background: var(--navy2); }
+
+/* ===== CARDS ===== */
+.card {
+  background: #fff; border-radius: 12px; padding: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.05); margin-bottom: 16px;
+}
+.kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.kpi { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+.kpi .rotulo { font-size: 13px; color: var(--muted); }
+.kpi .valor { font-size: 28px; font-weight: 700; margin-top: 4px; }
+.kpi .detalhe { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.graficos .card { margin-bottom: 0; }
+.grafico-box { position: relative; height: 300px; }
+.full { grid-column: 1 / -1; }
+
+/* ===== ALERTAS ===== */
+.alertas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.alerta {
+  border-radius: 10px; padding: 12px 14px; border: 1px solid var(--borda);
+  border-left-width: 5px; background: #fff;
+}
+.alerta .nome { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.alerta .msg { font-size: 13px; margin-top: 4px; color: #374151; }
+.alerta .ult { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.alerta.critico { border-left-color: #b91c1c; background: #fef2f2; }
+.alerta.atencao { border-left-color: #b45309; background: #fffbeb; }
+.alerta.ok      { border-left-color: #15803d; }
 
 /* ===== TABLE ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
-}
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
 th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  font-size: 14px;
-  text-align: center;
+  border-bottom: 1px solid var(--borda); padding: 8px 10px;
+  font-size: 14px; text-align: left; white-space: nowrap;
 }
-th {
-  background: #eee;
-}
+th { background: #f9fafb; color: var(--muted); font-weight: 600; font-size: 13px; position: sticky; top: 0; }
+td.num, th.num { text-align: right; }
+td.quebra { white-space: normal; min-width: 220px; }
+td.vazio { text-align: center; color: var(--muted); padding: 20px; }
+.tabela-alta { max-height: 520px; overflow: auto; }
 
 /* ===== STATUS ===== */
-.status-tratado {
-  background: #d4edda;
-  color: #155724;
-  font-weight: bold;
-}
-.status-nao-tratado {
-  background: #f8d7da;
-  color: #721c24;
-  font-weight: bold;
-}
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.pill.critico { background: #fee2e2; color: #991b1b; }
+.pill.atencao { background: #fef3c7; color: #92400e; }
+.pill.ok      { background: #dcfce7; color: #166534; }
+
+.status-tratado     { background: #d4edda; color: #155724; font-weight: bold; }
+.status-nao-tratado { background: #f8d7da; color: #721c24; font-weight: bold; }
+
+.msg-carregando { color: var(--muted); padding: 8px 0; }
+.msg-erro { color: #b91c1c; padding: 8px 0; }
 
 /* ===== MOBILE ===== */
-@media (max-width: 768px) {
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-  nav button {
-    font-size: 14px;
-    padding: 12px 6px;
-  }
+@media (max-width: 860px) {
+  .graficos { grid-template-columns: 1fr; }
+  section { padding: 12px; }
+  nav button { font-size: 14px; padding: 12px 8px; }
+  .kpi .valor { font-size: 24px; }
+  .grafico-box { height: 260px; }
 }
 </style>
 </head>
@@ -107,39 +136,146 @@ th {
 
 <header>
   <img src="logo.png" alt="Cidade Sol">
+  <span class="titulo">Painel Gerencial</span>
 </header>
 
 <nav>
-  <button type="button" class="active" onclick="showTab('ocorrencias', this)">
-    Resumo Ocorrências
-  </button>
-  <button type="button" onclick="showTab('os', this)">
-    Resumo OS
-  </button>
+  <button type="button" class="active" onclick="showTab('dashboard', this)">Dashboard Fiscais</button>
+  <button type="button" onclick="showTab('ocorrencias', this)">Resumo Ocorrências</button>
+  <button type="button" onclick="showTab('os', this)">Resumo OS</button>
 </nav>
 
+<!-- ================= DASHBOARD FISCAIS ================= -->
+<section id="dashboard" class="active">
+  <h2>Dashboard de Fiscalização</h2>
+
+  <div class="controls">
+    <label>Mês
+      <input type="month" id="mesDash">
+    </label>
+    <label>Fiscal
+      <select id="fiscalDash"><option value="">Todos</option></select>
+    </label>
+    <button type="button" class="btn-primary" onclick="buscarDashboard()">Atualizar</button>
+  </div>
+
+  <div id="dashStatus"></div>
+
+  <!-- ALERTAS -->
+  <div class="card">
+    <h3>Alertas de postagem</h3>
+    <p class="sub" id="regraAlerta"></p>
+    <div class="alertas" id="alertas"></div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi"><div class="rotulo">Veículos fiscalizados</div><div class="valor" id="kpiFiscalizacoes">–</div><div class="detalhe">viagens registradas no mês</div></div>
+    <div class="kpi"><div class="rotulo">Carros diferentes</div><div class="valor" id="kpiCarros">–</div><div class="detalhe">nº de ordem distintos</div></div>
+    <div class="kpi"><div class="rotulo">Passageiros contados</div><div class="valor" id="kpiPaxs">–</div><div class="detalhe">soma de Qtd. Paxs</div></div>
+    <div class="kpi"><div class="rotulo">Dias com fiscalização</div><div class="valor" id="kpiDias">–</div><div class="detalhe" id="kpiDiasDet"></div></div>
+    <div class="kpi"><div class="rotulo">Fiscais ativos</div><div class="valor" id="kpiFiscais">–</div><div class="detalhe">postaram no mês</div></div>
+  </div>
+
+  <!-- GRÁFICOS -->
+  <div class="graficos">
+    <div class="card">
+      <h3>Veículos fiscalizados por fiscal</h3>
+      <p class="sub">Quantidade de viagens registradas no mês</p>
+      <div class="grafico-box"><canvas id="gFiscal"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Horários fiscalizados</h3>
+      <p class="sub">Viagens fiscalizadas por faixa de horário da viagem</p>
+      <div class="grafico-box"><canvas id="gHorario"></canvas></div>
+    </div>
+    <div class="card full">
+      <h3>Fiscalizações por dia</h3>
+      <p class="sub">Veículos fiscalizados em cada dia do mês</p>
+      <div class="grafico-box" style="height:240px;"><canvas id="gDia"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TABELA POR FISCAL -->
+  <div class="card" style="margin-top:16px;">
+    <h3>Resumo por fiscal</h3>
+    <p class="sub">Mês selecionado</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fiscal</th>
+            <th class="num">Veículos fiscalizados</th>
+            <th class="num">Carros diferentes</th>
+            <th class="num">Dias postados</th>
+            <th class="num">Média por dia</th>
+            <th>Faixa de horários</th>
+            <th>Último post</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaFiscais"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TABELA DE HORÁRIOS FISCALIZADOS -->
+  <div class="card">
+    <h3>Horários fiscalizados (detalhado)</h3>
+    <div class="controls" style="margin:8px 0 10px 0;">
+      <label>Buscar (linha, nº de ordem, motorista, local)
+        <input type="search" id="buscaDetalhe" placeholder="Digite para filtrar..." oninput="renderDetalhe()">
+      </label>
+      <span class="sub" id="contDetalhe" style="margin:0 0 10px 0;"></span>
+    </div>
+    <div class="table-wrap tabela-alta">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th><th>Fiscal</th><th>De</th><th>Para</th><th>Linha</th>
+            <th>Horário</th><th>Nº Ordem</th><th>Local Emb.</th><th>Hora</th>
+            <th>Motorista</th><th class="num">Paxs</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaDetalhe"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <!-- ================= OCORRÊNCIAS ================= -->
-<section id="ocorrencias" class="active">
+<section id="ocorrencias">
   <h2>Resumo de Ocorrências</h2>
 
   <div class="controls">
-    <input type="month" id="mesOcorrencia">
-    <button type="button" onclick="buscarOcorrencias()">Buscar</button>
+    <label>Mês
+      <input type="month" id="mesOcorrencia">
+    </label>
+    <button type="button" class="btn-primary" onclick="buscarOcorrencias()">Buscar</button>
   </div>
 
-  <canvas id="graficoMotoristas" height="120"></canvas>
+  <div class="kpis">
+    <div class="kpi"><div class="rotulo">Ocorrências no mês</div><div class="valor" id="kpiOcTotal">–</div></div>
+    <div class="kpi"><div class="rotulo">Não tratadas</div><div class="valor" id="kpiOcAbertas">–</div></div>
+    <div class="kpi"><div class="rotulo">Tratadas</div><div class="valor" id="kpiOcTratadas">–</div></div>
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Motorista</th>
-        <th>Resumo</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaOcorrencias"></tbody>
-  </table>
+  <div class="card">
+    <h3>Motoristas com mais ocorrências</h3>
+    <p class="sub">Top 5 do mês</p>
+    <div class="grafico-box" style="height:260px;"><canvas id="graficoMotoristas"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Motorista</th><th>Resumo</th><th>Status</th></tr>
+        </thead>
+        <tbody id="tabelaOcorrencias"></tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <!-- ================= OS ================= -->
@@ -147,24 +283,26 @@ th {
   <h2>Resumo OS</h2>
 
   <div class="controls">
-    <input type="month" id="mesOS">
-    <button type="button" onclick="buscarOS()">Buscar</button>
+    <label>Mês
+      <input type="month" id="mesOS">
+    </label>
+    <button type="button" class="btn-primary" onclick="buscarOS()">Buscar</button>
   </div>
 
-  <div id="resumoOS"></div>
+  <div class="kpis">
+    <div class="kpi"><div class="rotulo">Total de OS</div><div class="valor" id="kpiOS">–</div></div>
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Fiscal</th>
-        <th>Nº Ordem</th>
-        <th>Observação</th>
-        <th>Nº OS</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaOS"></tbody>
-  </table>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Fiscal</th><th>Nº Ordem</th><th>Observação</th><th>Nº OS</th></tr>
+        </thead>
+        <tbody id="tabelaOS"></tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <script>
@@ -175,119 +313,386 @@ const URL_OCORRENCIAS =
 const URL_OS =
   "https://script.google.com/macros/s/AKfycbxPC3JLFZm0w6cM42UTRc_KWHLXVyLjWBI4P89saGEHsac4g1BusgsHhP77H6JVo4Db/exec";
 
-/* ===== ELEMENTOS ===== */
-const tabelaOcorrencias = document.getElementById("tabelaOcorrencias");
-const tabelaOS = document.getElementById("tabelaOS");
-const resumoOS = document.getElementById("resumoOS");
-const graficoMotoristas = document.getElementById("graficoMotoristas");
+/* ===== FISCAIS (mesmos nomes do app de fiscalização) ===== */
+const FISCAIS = ["Lucas Ribeiro", "Vilcemar", "Everton", "Luciano", "Wellington", "Joseval"];
 
-let grafico;
+/* ===== REGRAS DO ALERTA (ajuste aqui se precisar) ===== */
+const ALERTA_DIAS_SEGUIDOS = 2;  // alerta se ficar MAIS de 2 dias seguidos sem postar
+const ALERTA_JANELA_DIAS   = 7;  // olhando os últimos 7 dias...
+const ALERTA_FALTAS_JANELA = 2;  // ...alerta se faltar em MAIS de 2 dias
+
+/* ===== UTILITÁRIOS ===== */
+const $ = id => document.getElementById(id);
+
+function esc(v) {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Datas sempre no fuso do aparelho (toISOString usa UTC e erra o dia/mês à noite)
+function iso(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function deISO(s) { const [a, m, d] = s.split("-").map(Number); return new Date(a, m - 1, d, 12); }
+function somaDias(s, n) { const d = deISO(s); d.setDate(d.getDate() + n); return iso(d); }
+function difDias(a, b) { return Math.round((deISO(b) - deISO(a)) / 86400000); }
+function br(s) { return s ? s.split("-").reverse().join("/") : ""; }
+const HOJE = iso(new Date());
+
+// Aceita "08:30", "8:30", "8h", "8h30", "0830", "8" -> hora (0-23) ou null
+function horaDe(txt) {
+  const m = String(txt || "").trim().match(/^(\d{1,2})\s*[:hH.]?\s*(\d{2})?/);
+  if (!m) return null;
+  const h = Number(m[1]);
+  return h >= 0 && h <= 23 ? h : null;
+}
+function minutosDe(txt) {
+  const m = String(txt || "").trim().match(/^(\d{1,2})\s*[:hH.]?\s*(\d{2})?/);
+  if (!m) return null;
+  const h = Number(m[1]), mi = Number(m[2] || 0);
+  return h <= 23 && mi <= 59 ? h * 60 + mi : null;
+}
+function hhmm(min) { return String(Math.floor(min / 60)).padStart(2, "0") + ":" + String(min % 60).padStart(2, "0"); }
+
+/* ===== GRÁFICOS (estilo padrão) ===== */
+const graficos = {};
+Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+Chart.defaults.color = "#6b7280";
+
+function desenharBarras(id, labels, valores, opcoes = {}) {
+  if (graficos[id]) graficos[id].destroy();
+  graficos[id] = new Chart($(id), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: opcoes.rotulo || "Veículos fiscalizados",
+        data: valores,
+        backgroundColor: "#1f4e8c",
+        hoverBackgroundColor: "#0b2545",
+        borderRadius: 4,
+        maxBarThickness: 40
+      }]
+    },
+    options: {
+      indexAxis: opcoes.horizontal ? "y" : "x",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.parsed[opcoes.horizontal ? "x" : "y"]} ${opcoes.unidade || "veículo(s)"}` } }
+      },
+      scales: {
+        x: { grid: { display: !!opcoes.horizontal, color: "#f0f1f3" }, beginAtZero: true, ticks: { precision: 0 } },
+        y: { grid: { display: !opcoes.horizontal, color: "#f0f1f3" }, beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+}
 
 /* ===== NAVEGAÇÃO ===== */
 function showTab(id, btn) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  $(id).classList.add("active");
   btn.classList.add("active");
 }
 
-/* ===== OCORRÊNCIAS ===== */
-async function buscarOcorrencias() {
-  const mes = document.getElementById("mesOcorrencia").value;
+/* =====================================================
+   DASHBOARD FISCAIS
+===================================================== */
+let dadosRelatorio = [];   // tudo que veio do servidor (mês + últimos 30 dias)
+let dadosMes = [];         // só o mês selecionado e o fiscal filtrado
+
+async function buscarDashboard() {
+  const mes = $("mesDash").value;
   if (!mes) return alert("Selecione o mês");
 
-  tabelaOcorrencias.innerHTML =
-    "<tr><td colspan='4'>Carregando...</td></tr>";
+  // Busca o mês escolhido + os últimos 30 dias (para os alertas sempre olharem para hoje)
+  const inicioMes = mes + "-01";
+  const [a, m] = mes.split("-").map(Number);
+  const fimMes = iso(new Date(a, m, 0, 12));
+  const inicio = [inicioMes, somaDias(HOJE, -30)].sort()[0];
+  const fim = [fimMes, HOJE].sort()[1];
 
-  const res = await fetch(
-    `${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`
-  );
-  const dados = await res.json();
+  $("dashStatus").innerHTML = `<div class="msg-carregando">Carregando dados...</div>`;
 
-  if (!Array.isArray(dados)) {
-    tabelaOcorrencias.innerHTML =
-      "<tr><td colspan='4'>Erro ao carregar dados</td></tr>";
-    return;
+  try {
+    const res = await fetch(`${URL_OCORRENCIAS}?aba=relatorio&inicio=${inicio}&fim=${fim}`);
+    const j = await res.json();
+    if (j.status !== "ok" || !Array.isArray(j.linhas)) throw new Error(j.message || "Resposta inválida");
+
+    dadosRelatorio = j.linhas;
+    $("dashStatus").innerHTML = "";
+
+    atualizarListaFiscais();
+    renderAlertas();
+    renderDashboard();
+  } catch (e) {
+    console.error(e);
+    $("dashStatus").innerHTML = `<div class="msg-erro">Erro ao carregar dados: ${esc(e.message)}</div>`;
+  }
+}
+
+function todosFiscais() {
+  const extras = [...new Set(dadosRelatorio.map(l => l.Fiscal).filter(Boolean))]
+    .filter(f => !FISCAIS.includes(f));
+  return [...FISCAIS, ...extras.sort()];
+}
+
+function atualizarListaFiscais() {
+  const sel = $("fiscalDash");
+  const atual = sel.value;
+  sel.innerHTML = `<option value="">Todos</option>` +
+    todosFiscais().map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+  sel.value = atual;
+}
+
+$("fiscalDash").onchange = () => { if (dadosRelatorio.length) renderDashboard(); };
+
+/* ----- ALERTAS (sempre em relação a hoje, independente do mês escolhido) ----- */
+function avaliarFiscal(nome) {
+  const dias = new Set(dadosRelatorio.filter(l => l.Fiscal === nome && l.Data <= HOJE).map(l => l.Data));
+  const ultimo = [...dias].sort().pop() || "";
+
+  // Dias completos sem postar desde o último post (hoje não conta, o dia ainda não acabou)
+  const diasSem = ultimo ? difDias(ultimo, HOJE) - 1 : null;
+
+  // Faltas nos últimos 7 dias completos (de ontem para trás)
+  let faltas = 0;
+  for (let i = 1; i <= ALERTA_JANELA_DIAS; i++) {
+    if (!dias.has(somaDias(HOJE, -i))) faltas++;
   }
 
-  tabelaOcorrencias.innerHTML = "";
-  const contagem = {};
+  const msgs = [];
+  let nivel = "ok";
 
-  dados.forEach(o => {
-    const statusTxt = (o.Status || "").toLowerCase();
-    let classe = "";
-
-    if (statusTxt === "tratado") classe = "status-tratado";
-    if (statusTxt === "não tratado" || statusTxt === "nao tratado")
-      classe = "status-nao-tratado";
-
-    tabelaOcorrencias.innerHTML += `
-      <tr>
-        <td>${o.Data || ""}</td>
-        <td>${o.Motorista || ""}</td>
-        <td>${o.Resumo || ""}</td>
-        <td class="${classe}">${o.Status || ""}</td>
-      </tr>`;
-
-    contagem[o.Motorista] =
-      (contagem[o.Motorista] || 0) + 1;
-  });
-
-  const top5 = Object.entries(contagem)
-    .sort((a,b) => b[1] - a[1])
-    .slice(0,5);
-
-  if (grafico) grafico.destroy();
-
-  grafico = new Chart(graficoMotoristas, {
-    type: "bar",
-    data: {
-      labels: top5.map(i => i[0]),
-      datasets: [{
-        data: top5.map(i => i[1])
-      }]
+  if (!ultimo) {
+    nivel = "critico";
+    msgs.push("Sem nenhum post nos últimos 30 dias");
+  } else {
+    if (diasSem > ALERTA_DIAS_SEGUIDOS) {
+      nivel = "critico";
+      msgs.push(`${diasSem} dias seguidos sem postar`);
     }
-  });
+    if (faltas > ALERTA_FALTAS_JANELA) {
+      if (nivel === "ok") nivel = "atencao";
+      msgs.push(`Não postou em ${faltas} dos últimos ${ALERTA_JANELA_DIAS} dias`);
+    }
+  }
+  if (!msgs.length) msgs.push(`Em dia · postou em ${ALERTA_JANELA_DIAS - faltas} dos últimos ${ALERTA_JANELA_DIAS} dias`);
+
+  return { nome, nivel, msgs, ultimo, diasSem, faltas };
 }
 
-/* ===== OS ===== */
-async function buscarOS() {
-  const mes = document.getElementById("mesOS").value;
+const ICONE = { critico: "⛔", atencao: "⚠️", ok: "✅" };
+const TEXTO_NIVEL = { critico: "Crítico", atencao: "Atenção", ok: "Em dia" };
+let situacoes = {};
+
+function renderAlertas() {
+  $("regraAlerta").textContent =
+    `Referência: hoje (${br(HOJE)}). Alerta quando o fiscal fica mais de ${ALERTA_DIAS_SEGUIDOS} dias seguidos sem postar ` +
+    `ou deixa de postar em mais de ${ALERTA_FALTAS_JANELA} dos últimos ${ALERTA_JANELA_DIAS} dias. O dia de hoje não conta.`;
+
+  const ordem = { critico: 0, atencao: 1, ok: 2 };
+  const lista = todosFiscais().map(avaliarFiscal).sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
+  situacoes = Object.fromEntries(lista.map(s => [s.nome, s]));
+
+  $("alertas").innerHTML = lista.map(s => `
+    <div class="alerta ${s.nivel}">
+      <div class="nome">${ICONE[s.nivel]} ${esc(s.nome)} <span class="pill ${s.nivel}" style="margin-left:auto;">${TEXTO_NIVEL[s.nivel]}</span></div>
+      ${s.msgs.map(m => `<div class="msg">${esc(m)}</div>`).join("")}
+      <div class="ult">Último post: ${s.ultimo ? br(s.ultimo) : "—"}</div>
+    </div>`).join("");
+}
+
+/* ----- DASHBOARD DO MÊS ----- */
+function renderDashboard() {
+  const mes = $("mesDash").value;
+  const fiscal = $("fiscalDash").value;
+
+  dadosMes = dadosRelatorio
+    .filter(l => l.Data.startsWith(mes))
+    .filter(l => !fiscal || l.Fiscal === fiscal);
+
+  // KPIs
+  const dias = new Set(dadosMes.map(l => l.Data));
+  const [a, m] = mes.split("-").map(Number);
+  const diasNoMes = new Date(a, m, 0).getDate();
+  const diasPassados = mes === HOJE.slice(0, 7) ? Number(HOJE.slice(8, 10)) : (mes < HOJE.slice(0, 7) ? diasNoMes : 0);
+
+  $("kpiFiscalizacoes").textContent = dadosMes.length.toLocaleString("pt-BR");
+  $("kpiCarros").textContent = new Set(dadosMes.map(l => l.Ordem).filter(Boolean)).size.toLocaleString("pt-BR");
+  $("kpiPaxs").textContent = dadosMes.reduce((s, l) => s + (Number(l.Paxs) || 0), 0).toLocaleString("pt-BR");
+  $("kpiDias").textContent = dias.size;
+  $("kpiDiasDet").textContent = diasPassados ? `de ${diasPassados} dia(s) corridos do mês` : "";
+  $("kpiFiscais").textContent = new Set(dadosMes.map(l => l.Fiscal).filter(Boolean)).size;
+
+  // Por fiscal
+  const porFiscal = {};
+  (fiscal ? [fiscal] : todosFiscais()).forEach(f => porFiscal[f] = []);
+  dadosMes.forEach(l => (porFiscal[l.Fiscal] = porFiscal[l.Fiscal] || []).push(l));
+
+  const ranking = Object.entries(porFiscal).sort((x, y) => y[1].length - x[1].length);
+  desenharBarras("gFiscal", ranking.map(r => r[0]), ranking.map(r => r[1].length), { horizontal: true });
+
+  // Horários fiscalizados (faixa de hora do Horário da viagem)
+  const porHora = new Array(24).fill(0);
+  dadosMes.forEach(l => { const h = horaDe(l.Horario); if (h !== null) porHora[h]++; });
+  const comDado = porHora.map((v, i) => v ? i : -1).filter(i => i >= 0);
+  const hIni = comDado.length ? Math.min(...comDado) : 4;
+  const hFim = comDado.length ? Math.max(...comDado) : 23;
+  const horas = [];
+  for (let h = hIni; h <= hFim; h++) horas.push(h);
+  desenharBarras("gHorario", horas.map(h => String(h).padStart(2, "0") + "h"), horas.map(h => porHora[h]));
+
+  // Por dia
+  const porDia = new Array(diasNoMes).fill(0);
+  dadosMes.forEach(l => { porDia[Number(l.Data.slice(8, 10)) - 1]++; });
+  desenharBarras("gDia", porDia.map((_, i) => String(i + 1).padStart(2, "0")), porDia);
+
+  // Tabela por fiscal
+  $("tabelaFiscais").innerHTML = ranking.map(([nome, ls]) => {
+    const diasF = new Set(ls.map(l => l.Data)).size;
+    const mins = ls.map(l => minutosDe(l.Horario)).filter(v => v !== null);
+    const faixa = mins.length ? `${hhmm(Math.min(...mins))} – ${hhmm(Math.max(...mins))}` : "—";
+    const s = situacoes[nome] || avaliarFiscal(nome);
+    return `
+      <tr>
+        <td><strong>${esc(nome)}</strong></td>
+        <td class="num">${ls.length}</td>
+        <td class="num">${new Set(ls.map(l => l.Ordem).filter(Boolean)).size}</td>
+        <td class="num">${diasF}</td>
+        <td class="num">${diasF ? (ls.length / diasF).toFixed(1).replace(".", ",") : "—"}</td>
+        <td>${faixa}</td>
+        <td>${s.ultimo ? br(s.ultimo) : "—"}</td>
+        <td><span class="pill ${s.nivel}">${ICONE[s.nivel]} ${TEXTO_NIVEL[s.nivel]}</span></td>
+      </tr>`;
+  }).join("") || `<tr><td colspan="8" class="vazio">Sem dados no mês.</td></tr>`;
+
+  renderDetalhe();
+}
+
+function renderDetalhe() {
+  const busca = $("buscaDetalhe").value.trim().toLowerCase();
+
+  const lista = dadosMes
+    .filter(l => !busca || [l.De, l.Para, l.Linha, l.Ordem, l.Motorista, l.Local, l.Fiscal]
+      .some(v => String(v).toLowerCase().includes(busca)));
+
+  // Ordena: dia mais recente primeiro; dentro do dia, por horário
+  lista.sort((x, y) => y.Data.localeCompare(x.Data) || (minutosDe(x.Horario) ?? 9999) - (minutosDe(y.Horario) ?? 9999));
+
+  $("contDetalhe").textContent = `${lista.length} registro(s)`;
+
+  $("tabelaDetalhe").innerHTML = lista.map(l => `
+    <tr>
+      <td>${br(l.Data)}</td>
+      <td>${esc(l.Fiscal)}</td>
+      <td>${esc(l.De)}</td>
+      <td>${esc(l.Para)}</td>
+      <td>${esc(l.Linha)}</td>
+      <td><strong>${esc(l.Horario)}</strong></td>
+      <td>${esc(l.Ordem)}</td>
+      <td>${esc(l.Local)}</td>
+      <td>${esc(l.Hora)}</td>
+      <td>${esc(l.Motorista)}</td>
+      <td class="num">${esc(l.Paxs)}</td>
+    </tr>`).join("") || `<tr><td colspan="11" class="vazio">Nenhum registro.</td></tr>`;
+}
+
+/* =====================================================
+   OCORRÊNCIAS
+===================================================== */
+async function buscarOcorrencias() {
+  const mes = $("mesOcorrencia").value;
   if (!mes) return alert("Selecione o mês");
 
-  tabelaOS.innerHTML =
-    "<tr><td colspan='5'>Carregando...</td></tr>";
+  const tbody = $("tabelaOcorrencias");
+  tbody.innerHTML = `<tr><td colspan="4" class="vazio">Carregando...</td></tr>`;
 
-  const res = await fetch(`${URL_OS}?mes=${mes}`);
-  const dados = await res.json();
+  try {
+    const res = await fetch(`${URL_OCORRENCIAS}?aba=Resumo_ocorrencias&mes=${mes}`);
+    const dados = await res.json();
+    if (!Array.isArray(dados)) throw new Error(dados.message || "Resposta inválida");
 
-  if (!Array.isArray(dados)) {
-    tabelaOS.innerHTML =
-      "<tr><td colspan='5'>Erro ao carregar OS</td></tr>";
-    return;
+    const contagem = {};
+    let tratadas = 0, abertas = 0;
+
+    tbody.innerHTML = dados.map(o => {
+      const statusTxt = (o.Status || "").toLowerCase();
+      let classe = "";
+      if (statusTxt === "tratado") { classe = "status-tratado"; tratadas++; }
+      if (statusTxt === "não tratado" || statusTxt === "nao tratado") { classe = "status-nao-tratado"; abertas++; }
+
+      const mot = o.Motorista || "(sem nome)";
+      contagem[mot] = (contagem[mot] || 0) + 1;
+
+      return `
+        <tr>
+          <td>${esc(o.Data)}</td>
+          <td>${esc(o.Motorista)}</td>
+          <td class="quebra">${esc(o.Resumo)}</td>
+          <td class="${classe}">${esc(o.Status)}</td>
+        </tr>`;
+    }).join("") || `<tr><td colspan="4" class="vazio">Nenhuma ocorrência no mês.</td></tr>`;
+
+    $("kpiOcTotal").textContent = dados.length;
+    $("kpiOcAbertas").textContent = abertas;
+    $("kpiOcTratadas").textContent = tratadas;
+
+    const top5 = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    desenharBarras("graficoMotoristas", top5.map(i => i[0]), top5.map(i => i[1]),
+      { horizontal: true, rotulo: "Ocorrências", unidade: "ocorrência(s)" });
+
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="4" class="vazio">Erro ao carregar dados: ${esc(e.message)}</td></tr>`;
   }
-
-  resumoOS.innerHTML =
-    `<strong>Total de OS:</strong> ${dados.length}`;
-
-  tabelaOS.innerHTML = "";
-
-  dados.forEach(o => {
-    tabelaOS.innerHTML += `
-      <tr>
-        <td>${o.Data || ""}</td>
-        <td>${o.Fiscal || ""}</td>
-        <td>${o["Nº de Ordem"] || ""}</td>
-        <td>${o.Observação || ""}</td>
-        <td>${o["Nº da OS"] || ""}</td>
-      </tr>`;
-  });
 }
 
-/* ===== MÊS PADRÃO ===== */
-const hoje = new Date().toISOString().slice(0,7);
-document.getElementById("mesOcorrencia").value = hoje;
-document.getElementById("mesOS").value = hoje;
+/* =====================================================
+   OS
+===================================================== */
+async function buscarOS() {
+  const mes = $("mesOS").value;
+  if (!mes) return alert("Selecione o mês");
+
+  const tbody = $("tabelaOS");
+  tbody.innerHTML = `<tr><td colspan="5" class="vazio">Carregando...</td></tr>`;
+
+  try {
+    const res = await fetch(`${URL_OS}?mes=${mes}`);
+    const dados = await res.json();
+    if (!Array.isArray(dados)) throw new Error(dados.message || "Resposta inválida");
+
+    $("kpiOS").textContent = dados.length;
+
+    tbody.innerHTML = dados.map(o => `
+      <tr>
+        <td>${esc(o.Data)}</td>
+        <td>${esc(o.Fiscal)}</td>
+        <td>${esc(o["Nº de Ordem"])}</td>
+        <td class="quebra">${esc(o.Observação)}</td>
+        <td>${esc(o["Nº da OS"])}</td>
+      </tr>`).join("") || `<tr><td colspan="5" class="vazio">Nenhuma OS no mês.</td></tr>`;
+
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="5" class="vazio">Erro ao carregar OS: ${esc(e.message)}</td></tr>`;
+  }
+}
+
+/* ===== MÊS PADRÃO + CARGA INICIAL ===== */
+const mesAtual = HOJE.slice(0, 7);
+$("mesDash").value = mesAtual;
+$("mesOcorrencia").value = mesAtual;
+$("mesOS").value = mesAtual;
+
+buscarDashboard();
+buscarOcorrencias();
+buscarOS();
 </script>
 
 </body>
