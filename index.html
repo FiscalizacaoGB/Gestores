@@ -313,8 +313,10 @@ const URL_OCORRENCIAS =
 const URL_OS =
   "https://script.google.com/macros/s/AKfycbxPC3JLFZm0w6cM42UTRc_KWHLXVyLjWBI4P89saGEHsac4g1BusgsHhP77H6JVo4Db/exec";
 
-/* ===== FISCAIS (mesmos nomes do app de fiscalização) ===== */
-const FISCAIS = ["Lucas Ribeiro", "Vilcemar", "Everton", "Luciano", "Wellington", "Joseval"];
+/* ===== FISCAIS NO CONTROLE DE POSTAGEM (mesmos nomes do app de fiscalização) =====
+   Gestores (Lucas Ribeiro, Vilcemar) e quem saiu do time (Luciano) ficam fora dos alertas.
+   Se algum deles postar, aparece nos gráficos e tabelas do mês como "Fora do controle". */
+const FISCAIS = ["Everton", "Wellington", "Joseval"];
 
 /* ===== REGRAS DO ALERTA (ajuste aqui se precisar) ===== */
 const ALERTA_DIAS_SEGUIDOS = 2;  // alerta se ficar MAIS de 2 dias seguidos sem postar
@@ -435,8 +437,10 @@ async function buscarDashboard() {
   }
 }
 
+// Fiscais do controle + qualquer outro que tenha postado no mês selecionado
 function todosFiscais() {
-  const extras = [...new Set(dadosRelatorio.map(l => l.Fiscal).filter(Boolean))]
+  const mes = $("mesDash").value;
+  const extras = [...new Set(dadosRelatorio.filter(l => l.Data.startsWith(mes)).map(l => l.Fiscal).filter(Boolean))]
     .filter(f => !FISCAIS.includes(f));
   return [...FISCAIS, ...extras.sort()];
 }
@@ -496,7 +500,7 @@ function renderAlertas() {
     `ou deixa de postar em mais de ${ALERTA_FALTAS_JANELA} dos últimos ${ALERTA_JANELA_DIAS} dias. O dia de hoje não conta.`;
 
   const ordem = { critico: 0, atencao: 1, ok: 2 };
-  const lista = todosFiscais().map(avaliarFiscal).sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
+  const lista = FISCAIS.map(avaliarFiscal).sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
   situacoes = Object.fromEntries(lista.map(s => [s.nome, s]));
 
   $("alertas").innerHTML = lista.map(s => `
@@ -557,7 +561,11 @@ function renderDashboard() {
     const diasF = new Set(ls.map(l => l.Data)).size;
     const mins = ls.map(l => minutosDe(l.Horario)).filter(v => v !== null);
     const faixa = mins.length ? `${hhmm(Math.min(...mins))} – ${hhmm(Math.max(...mins))}` : "—";
-    const s = situacoes[nome] || avaliarFiscal(nome);
+    const s = situacoes[nome];   // só existe para quem está no controle de postagem
+    const ultimo = s ? s.ultimo : [...new Set(ls.map(l => l.Data))].sort().pop();
+    const situacao = s
+      ? `<span class="pill ${s.nivel}">${ICONE[s.nivel]} ${TEXTO_NIVEL[s.nivel]}</span>`
+      : `<span class="sub" style="margin:0;">Fora do controle</span>`;
     return `
       <tr>
         <td><strong>${esc(nome)}</strong></td>
@@ -566,8 +574,8 @@ function renderDashboard() {
         <td class="num">${diasF}</td>
         <td class="num">${diasF ? (ls.length / diasF).toFixed(1).replace(".", ",") : "—"}</td>
         <td>${faixa}</td>
-        <td>${s.ultimo ? br(s.ultimo) : "—"}</td>
-        <td><span class="pill ${s.nivel}">${ICONE[s.nivel]} ${TEXTO_NIVEL[s.nivel]}</span></td>
+        <td>${ultimo ? br(ultimo) : "—"}</td>
+        <td>${situacao}</td>
       </tr>`;
   }).join("") || `<tr><td colspan="8" class="vazio">Sem dados no mês.</td></tr>`;
 
